@@ -57,8 +57,28 @@ export default function AnalyticsClickTracking() {
       }
     };
 
+    const onDocumentSubmit = (event: Event) => {
+      const target = event.target as HTMLFormElement | null;
+      if (!target || target.tagName.toLowerCase() !== 'form') {
+        return;
+      }
+
+      const dataLayer = ensureDataLayer();
+      dataLayer.push({
+        event: 'form_submit',
+        form_id: target.id || '',
+        form_name: target.getAttribute('name') || '',
+        form_action: target.getAttribute('action') || '',
+        page_path: window.location.pathname,
+      });
+    };
+
     document.addEventListener('click', onDocumentClick, true);
-    return () => document.removeEventListener('click', onDocumentClick, true);
+    document.addEventListener('submit', onDocumentSubmit, true);
+    return () => {
+      document.removeEventListener('click', onDocumentClick, true);
+      document.removeEventListener('submit', onDocumentSubmit, true);
+    };
   }, []);
 
   return null;
