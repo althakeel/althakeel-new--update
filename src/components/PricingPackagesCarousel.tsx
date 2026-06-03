@@ -118,7 +118,7 @@ export default function PricingPackagesCarousel({
     }
     scopedWindow.dataLayer.push({
       event: 'whatsapp_click',
-      link_url: url,
+      whatsapp_url: url,
       link_text: isArabic ? 'استفسار واتساب' : 'WhatsApp enquiry',
       page_path: window.location.pathname,
       source: 'pricing_packages_carousel',

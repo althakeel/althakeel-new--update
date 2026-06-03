@@ -35,7 +35,6 @@ export default function AnalyticsClickTracking() {
 
       const dataLayer = ensureDataLayer();
       const basePayload: DataLayerEvent = {
-        link_url: rawHref,
         link_text: (anchor.textContent || '').trim(),
         page_path: window.location.pathname,
       };
@@ -44,6 +43,7 @@ export default function AnalyticsClickTracking() {
         dataLayer.push({
           event: 'phone_click',
           phone_number: normalizePhone(rawHref),
+          link_url: rawHref,
           ...basePayload,
         });
         return;
@@ -52,6 +52,7 @@ export default function AnalyticsClickTracking() {
       if (isWhatsAppUrl(rawHref)) {
         dataLayer.push({
           event: 'whatsapp_click',
+          whatsapp_url: rawHref,
           ...basePayload,
         });
       }

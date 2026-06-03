@@ -40,7 +40,7 @@ export default function WhatsappBottomChat() {
     }
     scopedWindow.dataLayer.push({
       event: 'whatsapp_click',
-      link_url: url,
+      whatsapp_url: url,
       link_text: isArabic ? 'ارسال واتساب' : 'Send WhatsApp',
       page_path: window.location.pathname,
       source: 'whatsapp_bottom_chat',
