@@ -112,6 +112,17 @@ export default function PricingPackagesCarousel({
       ? `مرحباً، أرغب في الاستفسار عن هذه الخدمة.\n\nالباقة: ${packageTitle}\nالخدمة: ${caseTitle}\nالتفاصيل:\n${cleanDescription}`
       : `Hello, I would like to enquire about this service.\n\nPackage: ${packageTitle}\nService: ${caseTitle}\nDetails:\n${cleanDescription}`;
     const url = `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(message)}`;
+    const scopedWindow = window as Window & { dataLayer?: Record<string, unknown>[] };
+    if (!Array.isArray(scopedWindow.dataLayer)) {
+      scopedWindow.dataLayer = [];
+    }
+    scopedWindow.dataLayer.push({
+      event: 'whatsapp_click',
+      link_url: url,
+      link_text: isArabic ? 'استفسار واتساب' : 'WhatsApp enquiry',
+      page_path: window.location.pathname,
+      source: 'pricing_packages_carousel',
+    });
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 

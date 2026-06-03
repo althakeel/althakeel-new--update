@@ -1,0 +1,65 @@
+'use client';
+
+import { useEffect } from 'react';
+
+type DataLayerEvent = Record<string, unknown>;
+
+const ensureDataLayer = (): DataLayerEvent[] => {
+  const scopedWindow = window as Window & { dataLayer?: DataLayerEvent[] };
+  if (!Array.isArray(scopedWindow.dataLayer)) {
+    scopedWindow.dataLayer = [];
+  }
+  return scopedWindow.dataLayer;
+};
+
+const normalizePhone = (href: string) => href.replace(/^tel:/i, '').replace(/[^\d+]/g, '');
+
+const isWhatsAppUrl = (href: string) => {
+  const lowerHref = href.toLowerCase();
+  return lowerHref.includes('wa.me/') || lowerHref.includes('whatsapp.com/') || lowerHref.includes('api.whatsapp.com/');
+};
+
+export default function AnalyticsClickTracking() {
+  useEffect(() => {
+    const onDocumentClick = (event: MouseEvent) => {
+      const targetElement = event.target as HTMLElement | null;
+      const anchor = targetElement?.closest('a[href]') as HTMLAnchorElement | null;
+      if (!anchor) {
+        return;
+      }
+
+      const rawHref = anchor.getAttribute('href') || '';
+      if (!rawHref) {
+        return;
+      }
+
+      const dataLayer = ensureDataLayer();
+      const basePayload: DataLayerEvent = {
+        link_url: rawHref,
+        link_text: (anchor.textContent || '').trim(),
+        page_path: window.location.pathname,
+      };
+
+      if (rawHref.toLowerCase().startsWith('tel:')) {
+        dataLayer.push({
+          event: 'phone_click',
+          phone_number: normalizePhone(rawHref),
+          ...basePayload,
+        });
+        return;
+      }
+
+      if (isWhatsAppUrl(rawHref)) {
+        dataLayer.push({
+          event: 'whatsapp_click',
+          ...basePayload,
+        });
+      }
+    };
+
+    document.addEventListener('click', onDocumentClick, true);
+    return () => document.removeEventListener('click', onDocumentClick, true);
+  }, []);
+
+  return null;
+}

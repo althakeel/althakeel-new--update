@@ -60,13 +60,13 @@ export default function Footer({ locale }: { locale: string }) {
 
   return (
     <footer className="relative overflow-hidden bg-[#160A0A] text-white">
-      <div className="absolute inset-0 opacity-60" aria-hidden>
+      <div className="pointer-events-none absolute inset-0 opacity-60" aria-hidden>
         <div className="absolute -left-16 top-10 h-40 w-40 rounded-full bg-[#DE3B34]/25 blur-3xl" />
         <div className="absolute right-10 top-0 h-48 w-48 rounded-full bg-cyan-500/15 blur-3xl" />
         <div className="absolute left-1/2 bottom-[-40px] h-56 w-56 -translate-x-1/2 rounded-full bg-emerald-500/12 blur-3xl" />
       </div>
 
-      <div className="relative mx-auto flex max-w-7xl flex-col gap-12 px-6 py-14 sm:px-10 lg:px-12">
+      <div className="relative z-10 mx-auto flex max-w-7xl flex-col gap-12 px-6 py-14 sm:px-10 lg:px-12">
         <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-4">
             <div className="flex items-center gap-3">

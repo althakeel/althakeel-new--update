@@ -34,6 +34,17 @@ export default function WhatsappBottomChat() {
     const finalMessage = message.trim() || prefilledMessage;
     const encoded = encodeURIComponent(finalMessage);
     const url = `https://wa.me/${phone}?text=${encoded}`;
+    const scopedWindow = window as Window & { dataLayer?: Record<string, unknown>[] };
+    if (!Array.isArray(scopedWindow.dataLayer)) {
+      scopedWindow.dataLayer = [];
+    }
+    scopedWindow.dataLayer.push({
+      event: 'whatsapp_click',
+      link_url: url,
+      link_text: isArabic ? 'ارسال واتساب' : 'Send WhatsApp',
+      page_path: window.location.pathname,
+      source: 'whatsapp_bottom_chat',
+    });
     window.open(url, '_blank', 'noopener,noreferrer');
     setMessage(prefilledMessage);
     setOpen(false);
