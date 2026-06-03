@@ -30,6 +30,8 @@ export default function AdminPage() {
   const [users, setUsers] = useState<DashboardAccessRecord[]>([]);
   const [tab, setTab] = useState<Tab>('users');
   const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteUsername, setInviteUsername] = useState('');
+  const [invitePassword, setInvitePassword] = useState('');
   const [permissionPreset, setPermissionPreset] = useState<'all' | 'blogs'>('all');
   const [actionLoading, setActionLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -145,17 +147,56 @@ export default function AdminPage() {
 
   const handleInvite = async () => {
     const email = normalizeEmail(inviteEmail);
+    const username = inviteUsername.trim();
+    const password = invitePassword.trim();
+
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setFeedback({ type: 'error', message: 'Please enter a valid email address.' });
       return;
     }
+
+    if (!username) {
+      setFeedback({ type: 'error', message: 'Please enter a username.' });
+      return;
+    }
+
+    if (password.length < 6) {
+      setFeedback({ type: 'error', message: 'Password must be at least 6 characters.' });
+      return;
+    }
+
     setActionLoading(true);
     setFeedback(null);
     try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error('You must be signed in as primary admin.');
+      }
+
+      const token = await currentUser.getIdToken();
+      const provisionResponse = await fetch('/api/admin/users/provision', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ email, username, password }),
+      });
+
+      const provisionResult = await provisionResponse.json() as { success?: boolean; message?: string };
+      const provisioningSkipped = !provisionResponse.ok
+        && typeof provisionResult?.message === 'string'
+        && provisionResult.message.includes('Firebase Admin credentials are not configured');
+
+      if ((!provisionResponse.ok || !provisionResult?.success) && !provisioningSkipped) {
+        throw new Error(provisionResult?.message || 'Failed to set username/password credentials.');
+      }
+
       const approvedUser = await approveDashboardAccess(
         email,
         adminEmail,
-        permissionPreset === 'all' ? FULL_PERMISSIONS : BLOGS_ONLY_PERMISSIONS
+        permissionPreset === 'all' ? FULL_PERMISSIONS : BLOGS_ONLY_PERMISSIONS,
+        username
       );
       if (approvedUser) {
         upsertUser(approvedUser);
@@ -169,13 +210,18 @@ export default function AdminPage() {
       setFeedback({
         type: res.ok && result?.success ? 'success' : 'error',
         message: res.ok && result?.success
-          ? `Invitation sent and access granted to ${email}`
+          ? (provisioningSkipped
+            ? `Access granted to ${email}. Credential provisioning was skipped because Firebase Admin credentials are not configured. If the Firebase Auth account already exists, the current password will still work.`
+            : `Invitation sent and access granted to ${email}. Username/password created.`)
           : `Access granted to ${email}, but invitation email failed: ${result?.message || 'Unknown email error'}`,
       });
       setInviteEmail('');
+      setInviteUsername('');
+      setInvitePassword('');
       await loadUsers();
-    } catch {
-      setFeedback({ type: 'error', message: 'Failed to invite user.' });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Failed to invite user.';
+      setFeedback({ type: 'error', message });
     } finally {
       setActionLoading(false);
     }
@@ -332,6 +378,29 @@ export default function AdminPage() {
                 placeholder="user@example.com"
                 className="w-full rounded-xl border border-white/15 bg-slate-900/80 px-4 py-3 text-slate-100 outline-none transition-colors focus:border-amber-300"
               />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-200">Username</label>
+                <input
+                  type="text"
+                  value={inviteUsername}
+                  onChange={(e) => setInviteUsername(e.target.value)}
+                  placeholder="username"
+                  className="w-full rounded-xl border border-white/15 bg-slate-900/80 px-4 py-3 text-slate-100 outline-none transition-colors focus:border-amber-300"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm font-medium text-slate-200">Password</label>
+                <input
+                  type="password"
+                  value={invitePassword}
+                  onChange={(e) => setInvitePassword(e.target.value)}
+                  placeholder="Minimum 6 characters"
+                  className="w-full rounded-xl border border-white/15 bg-slate-900/80 px-4 py-3 text-slate-100 outline-none transition-colors focus:border-amber-300"
+                />
+              </div>
             </div>
 
             <div>

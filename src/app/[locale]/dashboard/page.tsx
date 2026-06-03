@@ -26,7 +26,6 @@ import {
   BlogPost,
   BlogsBannerCard,
   deleteBlogFromServer,
-  loadBlogsFromServer,
   loadBlogsPageBannerConfigFromServer,
   saveBlogToServer,
   saveBlogsPageBannerConfigToServer,
@@ -118,6 +117,39 @@ export default function Dashboard() {
     });
   };
 
+  const loadPublishedBlogs = async (showErrorFeedback = false) => {
+    try {
+      const response = await fetch('/api/blogs', { cache: 'no-store' });
+      const result = await response.json().catch(() => ({})) as {
+        success?: boolean;
+        blogs?: BlogPost[];
+        message?: string;
+      };
+
+      if (!response.ok || !result?.success || !Array.isArray(result.blogs)) {
+        throw new Error(result?.message || 'Failed to load blogs.');
+      }
+
+      const sortedBlogs = result.blogs.sort((a, b) => b.createdAt - a.createdAt);
+      setBlogs(sortedBlogs);
+      return sortedBlogs;
+    } catch (error) {
+      console.error('Load published blogs error:', error);
+      if (showErrorFeedback) {
+        setBlogFeedback({
+          type: 'error',
+          message:
+            error instanceof Error && error.message
+              ? error.message
+              : locale === 'ar'
+                ? 'تعذر تحميل المقالات من الخادم.'
+                : 'Unable to load blogs from server.',
+        });
+      }
+      return [];
+    }
+  };
+
   const sendInvitationEmail = async (payload: {
     email: string;
     locale: string;
@@ -153,14 +185,35 @@ export default function Dashboard() {
     }
 
     const idToken = await currentUser.getIdToken();
-    const response = await fetch('/api/admin/users/provision', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${idToken}`,
-      },
-      body: JSON.stringify(payload),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+    let response: Response;
+    try {
+      response = await fetch('/api/admin/users/provision', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      });
+    } catch (error) {
+      return {
+        success: false,
+        message:
+          error instanceof Error && error.name === 'AbortError'
+            ? locale === 'ar'
+              ? 'انتهت مهلة إنشاء بيانات الدخول. حاول مرة أخرى.'
+              : 'Credential provisioning timed out. Please try again.'
+            : locale === 'ar'
+              ? 'تعذر إنشاء بيانات الدخول للمستخدم.'
+              : 'Failed to provision user credentials.',
+      };
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     const result = await response.json().catch(() => ({}));
     if (!response.ok || !result?.success) {
@@ -177,6 +230,9 @@ export default function Dashboard() {
 
     return { success: true, message: '' };
   };
+
+  const hasMissingFirebaseAdminCredentials = (message?: string) =>
+    typeof message === 'string' && message.includes('Firebase Admin credentials are not configured');
 
   const loadAccessUsers = async () => {
     try {
@@ -361,7 +417,7 @@ export default function Dashboard() {
   useEffect(() => {
     const loadServerContent = async () => {
       const [serverBlogs, bannerConfig] = await Promise.all([
-        loadBlogsFromServer(),
+        loadPublishedBlogs(),
         loadBlogsPageBannerConfigFromServer(),
       ]);
 
@@ -412,6 +468,17 @@ export default function Dashboard() {
       return;
     }
 
+    if (!normalizedInviteUsername) {
+      setAccessFeedback({
+        type: 'error',
+        message:
+          locale === 'ar'
+            ? 'يرجى إدخال اسم مستخدم للموافقة.'
+            : 'Please provide a username for approval.',
+      });
+      return;
+    }
+
     if (normalizedInvitePassword.length < 6) {
       setAccessFeedback({
         type: 'error',
@@ -425,36 +492,23 @@ export default function Dashboard() {
 
     try {
       setIsAccessActionLoading(true);
-      const approvalSave = await withTimeout(
-        approveDashboardAccess(
-          normalizedInviteEmail,
-          user.email,
-          permissionPreset === 'all' ? FULL_PERMISSIONS : BLOGS_ONLY_PERMISSIONS,
-          normalizedInviteUsername || undefined
-        ),
-        12000
+      const approvalSave = await approveDashboardAccess(
+        normalizedInviteEmail,
+        user.email,
+        permissionPreset === 'all' ? FULL_PERMISSIONS : BLOGS_ONLY_PERMISSIONS,
+        normalizedInviteUsername || undefined
       );
-
-      if (approvalSave.timedOut) {
-        setAccessFeedback({
-          type: 'error',
-          message:
-            locale === 'ar'
-              ? 'استغرق حفظ الموافقة وقتا طويلا. حاول مرة أخرى أو اضغط تحديث القائمة.'
-              : 'Approval save took too long. Try again or click Refresh List.',
-        });
-        return;
-      }
-
-      if (approvalSave.error) {
-        throw approvalSave.error;
-      }
 
       const provisionResult = await provisionCustomerCredentials({
         email: normalizedInviteEmail,
         username: normalizedInviteUsername || undefined,
         password: normalizedInvitePassword,
       });
+
+      const provisioningSkipped = !provisionResult.success && hasMissingFirebaseAdminCredentials(provisionResult.message);
+      if (!provisionResult.success && !provisioningSkipped) {
+        throw new Error(provisionResult.message);
+      }
 
       const { response: inviteResponse, result: inviteResult } = await sendInvitationEmail({
         email: normalizedInviteEmail,
@@ -480,6 +534,19 @@ export default function Dashboard() {
                 ? 'تمت الموافقة وإنشاء بيانات الدخول لكن فشل إرسال البريد. تحقق من إعدادات Resend.'
                 : 'Access approved and credentials provisioned, but email failed to send. Check Resend configuration.',
         });
+      } else if (provisioningSkipped) {
+        setAccessFeedback({
+          type: inviteResponse.ok && inviteResult?.success ? 'success' : 'error',
+          message: inviteResponse.ok && inviteResult?.success
+            ? locale === 'ar'
+              ? 'تمت الموافقة، وتم تجاهل مزامنة كلمة المرور لأن بيانات Firebase Admin غير مهيأة. إذا كان الحساب موجوداً مسبقاً في Firebase Auth، يمكنك تسجيل الدخول بكلمة المرور الحالية.'
+              : 'Access approved, and password provisioning was skipped because Firebase Admin credentials are not configured. If the Firebase Auth account already exists, you can log in with the current password.'
+            : (typeof inviteResult?.message === 'string' && inviteResult.message.trim())
+              ? inviteResult.message
+              : locale === 'ar'
+                ? 'تمت الموافقة لكن فشل إرسال البريد. تحقق من إعدادات Resend.'
+                : 'Access approved, but email failed to send. Check Resend configuration.',
+        });
       } else {
         setAccessFeedback({
           type: 'error',
@@ -489,7 +556,7 @@ export default function Dashboard() {
               : `Access approved, but username/password provisioning failed: ${provisionResult.message}`,
         });
       }
-      await loadAccessUsers();
+      void loadAccessUsers();
     } catch (error) {
       console.error('Approve access error:', error);
       setAccessFeedback({
@@ -557,7 +624,7 @@ export default function Dashboard() {
               : 'Failed to send invitation. Check Resend configuration.',
       });
 
-      await loadAccessUsers();
+      void loadAccessUsers();
     } catch (error) {
       console.error('Send invitation error:', error);
       setAccessFeedback({
@@ -815,7 +882,7 @@ export default function Dashboard() {
         throw new Error(result?.message || 'Failed to refresh auto blog images.');
       }
 
-      const serverBlogs = await loadBlogsFromServer();
+      const serverBlogs = await loadPublishedBlogs();
       setBlogs(serverBlogs);
 
       const refreshedCount = Number(result?.refreshed || 0);
@@ -860,7 +927,7 @@ export default function Dashboard() {
         throw new Error(result?.message || 'Failed to refresh this blog image.');
       }
 
-      const serverBlogs = await loadBlogsFromServer();
+      const serverBlogs = await loadPublishedBlogs();
       setBlogs(serverBlogs);
       setBlogFeedback({
         type: 'success',
@@ -899,7 +966,7 @@ export default function Dashboard() {
         throw new Error(result?.message || 'Failed to add Khaleej blogs.');
       }
 
-      const serverBlogs = await loadBlogsFromServer();
+      const serverBlogs = await loadPublishedBlogs();
       setBlogs(serverBlogs);
 
       const createdCount = Number(result?.created || 0);
@@ -1229,7 +1296,7 @@ export default function Dashboard() {
                     type="text"
                     value={inviteUsername}
                     onChange={(event) => setInviteUsername(event.target.value)}
-                    placeholder={locale === 'ar' ? 'اسم المستخدم (اختياري)' : 'Username (optional)'}
+                    placeholder={locale === 'ar' ? 'اسم المستخدم (مطلوب للموافقة)' : 'Username (required for approval)'}
                     className="w-full rounded-xl border border-[#CECDCB] bg-white px-4 py-3 text-slate-900 outline-none focus:border-[#DE3B34]"
                   />
                   <input
@@ -1764,6 +1831,13 @@ export default function Dashboard() {
                       : locale === 'ar'
                         ? 'تحديث الصور المكررة تلقائياً'
                         : 'Refresh Duplicate Images'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void loadPublishedBlogs(true)}
+                    className="rounded-lg border border-[#CECDCB] px-3 py-2 text-xs font-semibold text-[#160A0A] hover:bg-[#F1EFF0] transition-colors"
+                  >
+                    {locale === 'ar' ? 'تحديث قائمة المقالات' : 'Refresh Blogs List'}
                   </button>
                   <Link href={`/${locale}/blogs`} className="text-sm font-semibold text-[#DE3B34] hover:text-[#9B0F09]">
                     {locale === 'ar' ? 'عرض صفحة المدونة' : 'View Blogs Page'}

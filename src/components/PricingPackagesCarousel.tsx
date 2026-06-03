@@ -95,11 +95,22 @@ export default function PricingPackagesCarousel({
     setIsDragging(false);
   };
 
-  const handleWhatsAppEnquiry = (event: React.MouseEvent<HTMLButtonElement>, caseTitle: string) => {
+  const handleWhatsAppEnquiry = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    caseTitle: string,
+    caseDescription: string,
+    packageTitle: string,
+  ) => {
     event.stopPropagation();
+    const cleanDescription = caseDescription
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .join('\n');
+
     const message = isArabic
-      ? `اريد الاستفسار عن ${caseTitle}`
-      : `I want to enquiry about ${caseTitle}`;
+      ? `مرحباً، أرغب في الاستفسار عن هذه الخدمة.\n\nالباقة: ${packageTitle}\nالخدمة: ${caseTitle}\nالتفاصيل:\n${cleanDescription}`
+      : `Hello, I would like to enquire about this service.\n\nPackage: ${packageTitle}\nService: ${caseTitle}\nDetails:\n${cleanDescription}`;
     const url = `https://wa.me/${whatsappPhone}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
@@ -255,10 +266,10 @@ export default function PricingPackagesCarousel({
                   <h3 className="text-[17px] font-bold leading-6">{item.title}:</h3>
                   <button
                     type="button"
-                    onClick={(event) => handleWhatsAppEnquiry(event, item.title)}
+                    onClick={(event) => handleWhatsAppEnquiry(event, item.title, item.description, pkg.rightTitle)}
                     onPointerDown={(event) => event.stopPropagation()}
                     aria-label={isArabic ? `استفسار واتساب عن ${item.title}` : `WhatsApp enquiry about ${item.title}`}
-                    className="hidden shrink-0 items-center gap-1.5 rounded px-0 py-0 text-[11px] font-semibold tracking-[0.02em] text-white/85 opacity-0 transition hover:text-white md:inline-flex md:group-hover/case:opacity-100"
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded px-0 py-0 text-[11px] font-semibold tracking-[0.02em] text-white/85 transition hover:text-white md:opacity-0 md:group-hover/case:opacity-100"
                   >
                     <span>{isArabic ? 'اطلب استشارة' : 'Request Consultation'}</span>
                     <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">

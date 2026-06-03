@@ -24,6 +24,7 @@ export default function LoginPage() {
   const isArabic = locale === 'ar';
   const [loginIdentifier, setLoginIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [authActionInProgress, setAuthActionInProgress] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
@@ -36,6 +37,9 @@ export default function LoginPage() {
       subtitle: 'Only the primary admin can open the dashboard immediately. Other users must be approved by admin first.',
       email: 'Email or Username',
       password: 'Password',
+      showPassword: 'Show',
+      hidePassword: 'Hide',
+      passwordHint: 'No default password. Use the password set during account creation or admin invitation.',
       forgot: 'Access is managed by admin invitation.',
       login: 'Login',
       register: 'Create Account',
@@ -54,6 +58,9 @@ export default function LoginPage() {
       subtitle: 'يمكن فقط للبريد الإداري الرئيسي فتح اللوحة مباشرة. أما بقية المستخدمين فيحتاجون إلى موافقة المدير أولاً.',
       email: 'البريد الإلكتروني أو اسم المستخدم',
       password: 'كلمة المرور',
+      showPassword: 'إظهار',
+      hidePassword: 'إخفاء',
+      passwordHint: 'لا توجد كلمة مرور افتراضية. استخدم كلمة المرور التي تم تعيينها أثناء إنشاء الحساب أو دعوة الإدارة.',
       forgot: 'تتم إدارة الوصول من خلال دعوة إدارية.',
       login: 'تسجيل الدخول',
       register: 'إنشاء حساب',
@@ -137,6 +144,11 @@ export default function LoginPage() {
     if (!normalizedIdentifier || !password.trim()) {
       setFeedback({ type: 'error', message: t.invalid });
       return null;
+    }
+
+    const normalizedUsernameAlias = normalizedIdentifier.toLowerCase();
+    if (mode === 'login' && normalizedUsernameAlias === 'admin' && primaryAdminEmail) {
+      return primaryAdminEmail;
     }
 
     const looksLikeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedIdentifier);
@@ -256,12 +268,22 @@ export default function LoginPage() {
 
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-200">{t.password}</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              className="w-full rounded-xl border border-white/15 bg-slate-900/80 px-4 py-3 text-slate-100 outline-none transition-colors focus:border-amber-300"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                className="w-full rounded-xl border border-white/15 bg-slate-900/80 px-4 py-3 pr-20 text-slate-100 outline-none transition-colors focus:border-amber-300"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-xs font-semibold text-amber-300 hover:text-amber-200"
+              >
+                {showPassword ? t.hidePassword : t.showPassword}
+              </button>
+            </div>
+            <p className="mt-2 text-xs text-slate-400">{t.passwordHint}</p>
           </div>
 
           {feedback ? (
