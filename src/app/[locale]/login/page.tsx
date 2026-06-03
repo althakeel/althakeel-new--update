@@ -13,14 +13,16 @@ import {
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Locale } from '@/lib/translations';
-import { ensureDashboardAccessRequest, getPrimaryAdminEmail, normalizeEmail } from '@/lib/admin-access';
+import { getPrimaryAdminEmail, normalizeEmail, resolveDashboardLoginEmail } from '@/lib/admin-access';
+
+const SESSION_CHECK_TIMEOUT_MS = 8000;
 
 export default function LoginPage() {
   const params = useParams();
   const router = useRouter();
   const locale = (((params?.locale as string) || 'en') === 'ar' ? 'ar' : 'en') as Locale;
   const isArabic = locale === 'ar';
-  const [email, setEmail] = useState('');
+  const [loginIdentifier, setLoginIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [authActionInProgress, setAuthActionInProgress] = useState(false);
@@ -32,7 +34,7 @@ export default function LoginPage() {
     en: {
       title: 'Admin / Editor Login',
       subtitle: 'Only the primary admin can open the dashboard immediately. Other users must be approved by admin first.',
-      email: 'Email Address',
+      email: 'Email or Username',
       password: 'Password',
       forgot: 'Access is managed by admin invitation.',
       login: 'Login',
@@ -50,7 +52,7 @@ export default function LoginPage() {
     ar: {
       title: 'تسجيل دخول الإدارة / المحررين',
       subtitle: 'يمكن فقط للبريد الإداري الرئيسي فتح اللوحة مباشرة. أما بقية المستخدمين فيحتاجون إلى موافقة المدير أولاً.',
-      email: 'البريد الإلكتروني',
+      email: 'البريد الإلكتروني أو اسم المستخدم',
       password: 'كلمة المرور',
       forgot: 'تتم إدارة الوصول من خلال دعوة إدارية.',
       login: 'تسجيل الدخول',
@@ -71,6 +73,11 @@ export default function LoginPage() {
 
   useEffect(() => {
     let isCancelled = false;
+    const sessionFallbackTimer = setTimeout(() => {
+      if (!isCancelled) {
+        setCheckingSession(false);
+      }
+    }, SESSION_CHECK_TIMEOUT_MS);
 
     const handleExistingUser = async (user: User | null) => {
       if (isCancelled || authActionInProgress) {
@@ -82,13 +89,10 @@ export default function LoginPage() {
         return;
       }
 
-      const access = await ensureDashboardAccessRequest(user.email);
-      if (access?.status === 'active') {
+      if (!isCancelled) {
+        setCheckingSession(false);
         router.replace(`/${locale}/dashboard`);
-        return;
       }
-
-      router.replace('/portal');
     };
 
     const bootstrapSession = async () => {
@@ -111,6 +115,7 @@ export default function LoginPage() {
 
     return () => {
       isCancelled = true;
+      clearTimeout(sessionFallbackTimer);
       unsubscribe();
     };
   }, [authActionInProgress, locale, router]);
@@ -127,19 +132,46 @@ export default function LoginPage() {
     );
   }
 
-  const validateInputs = () => {
-    const normalizedEmail = normalizeEmail(email);
-    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail);
-    if (!isEmail || !password.trim()) {
+  const resolveEmailForAuth = async (mode: 'login' | 'register') => {
+    const normalizedIdentifier = loginIdentifier.trim();
+    if (!normalizedIdentifier || !password.trim()) {
       setFeedback({ type: 'error', message: t.invalid });
       return null;
     }
 
-    return normalizedEmail;
+    const looksLikeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedIdentifier);
+    if (mode === 'register') {
+      if (!looksLikeEmail) {
+        setFeedback({
+          type: 'error',
+          message: isArabic ? 'استخدم البريد الإلكتروني لإنشاء الحساب.' : 'Use an email address to create an account.',
+        });
+        return null;
+      }
+
+      return normalizeEmail(normalizedIdentifier);
+    }
+
+    if (looksLikeEmail) {
+      return normalizeEmail(normalizedIdentifier);
+    }
+
+    const resolvedEmail = await resolveDashboardLoginEmail(normalizedIdentifier);
+    if (!resolvedEmail) {
+      setFeedback({
+        type: 'error',
+        message: isArabic
+          ? 'اسم المستخدم غير موجود. استخدم البريد الإلكتروني أو تواصل مع الإدارة.'
+          : 'Username not found. Please use your email or contact admin.',
+      });
+      return null;
+    }
+
+    return resolvedEmail;
   };
 
   const runAuthAction = async (mode: 'login' | 'register') => {
-    const normalizedEmail = validateInputs();
+    const normalizedEmail = await resolveEmailForAuth(mode);
     if (!normalizedEmail) {
       return;
     }
@@ -154,16 +186,8 @@ export default function LoginPage() {
       } else {
         await signInWithEmailAndPassword(auth, normalizedEmail, password);
       }
-
-      const access = await ensureDashboardAccessRequest(normalizedEmail);
-
-      if (access?.status === 'active') {
-        setFeedback({ type: 'success', message: isArabic ? 'تم تسجيل الدخول بنجاح.' : 'Logged in successfully.' });
-        router.replace(`/${locale}/dashboard`);
-        return;
-      }
-
-      router.replace('/portal');
+      setFeedback({ type: 'success', message: isArabic ? 'تم تسجيل الدخول بنجاح.' : 'Logged in successfully.' });
+      router.replace(`/${locale}/dashboard`);
     } catch (error: unknown) {
       const code = typeof error === 'object' && error !== null && 'code' in error
         ? String((error as { code?: string }).code)
@@ -191,16 +215,8 @@ export default function LoginPage() {
       setAuthActionInProgress(true);
       setFeedback(null);
       const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      const signedInEmail = result.user.email ? normalizeEmail(result.user.email) : '';
-      const access = signedInEmail ? await ensureDashboardAccessRequest(signedInEmail) : null;
-
-      if (access?.status === 'active') {
-        router.replace(`/${locale}/dashboard`);
-        return;
-      }
-
-      router.replace('/portal');
+      await signInWithPopup(auth, provider);
+      router.replace(`/${locale}/dashboard`);
     } catch {
       setFeedback({
         type: 'error',
@@ -230,10 +246,10 @@ export default function LoginPage() {
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-200">{t.email}</label>
             <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="example@email.com"
+              type="text"
+              value={loginIdentifier}
+              onChange={(event) => setLoginIdentifier(event.target.value)}
+              placeholder="example@email.com or username"
               className="w-full rounded-xl border border-white/15 bg-slate-900/80 px-4 py-3 text-slate-100 outline-none transition-colors focus:border-amber-300"
             />
           </div>

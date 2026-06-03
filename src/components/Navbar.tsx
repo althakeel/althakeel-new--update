@@ -416,22 +416,6 @@ export default function Navbar({ locale }: NavbarProps) {
               </div>
             ) : null}
 
-            {!currentUser ? (
-              <button
-                type="button"
-                onClick={() => setAuthModalOpen(true)}
-                className="font-bold px-4 md:px-7 py-2.5 md:py-3 rounded-full text-xs md:text-sm transition-all duration-200 flex items-center gap-2 whitespace-nowrap shadow-lg hover:shadow-xl"
-                style={{
-                  backgroundColor: '#231111',
-                  color: '#F0D4D2',
-                  border: '1px solid #7A302C',
-                  boxShadow: '0 6px 16px rgba(0,0,0,0.35)'
-                }}
-              >
-                <span>{lang === 'en' ? 'Login / Register' : 'تسجيل الدخول / إنشاء حساب'}</span>
-              </button>
-            ) : null}
-
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -541,36 +525,34 @@ export default function Navbar({ locale }: NavbarProps) {
                   AR
                 </button>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  if (currentUser) {
+              {currentUser ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
                     router.push(`/${lang}/dashboard`);
-                  } else {
-                    setAuthModalOpen(true);
-                  }
-                }}
-                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-center text-sm font-bold text-[#F0D4D2] transition-all duration-200 shadow-[0_8px_20px_rgba(0,0,0,0.35)] hover:shadow-[0_10px_24px_rgba(0,0,0,0.45)]"
-                style={{
-                  backgroundColor: '#231111',
-                  border: '1px solid #7A302C'
-                }}
-              >
-                {currentUser?.photoURL ? (
-                  <img
-                    src={currentUser.photoURL}
-                    alt={currentUser.displayName || currentUser.email || 'User profile'}
-                    className="h-5 w-5 rounded-full object-cover ring-1 ring-white/20"
-                    referrerPolicy="no-referrer"
-                  />
-                ) : currentUser ? (
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6.75a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a7.5 7.5 0 1115 0" />
-                  </svg>
-                ) : null}
-                {currentUser ? (lang === 'en' ? `Hi, ${currentUserLabel}` : `${currentUserLabel} ،مرحباً`) : (lang === 'en' ? 'LOGIN / REGISTER' : 'تسجيل الدخول / إنشاء حساب')}
-              </button>
+                  }}
+                  className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-center text-sm font-bold text-[#F0D4D2] transition-all duration-200 shadow-[0_8px_20px_rgba(0,0,0,0.35)] hover:shadow-[0_10px_24px_rgba(0,0,0,0.45)]"
+                  style={{
+                    backgroundColor: '#231111',
+                    border: '1px solid #7A302C'
+                  }}
+                >
+                  {currentUser?.photoURL ? (
+                    <img
+                      src={currentUser.photoURL}
+                      alt={currentUser.displayName || currentUser.email || 'User profile'}
+                      className="h-5 w-5 rounded-full object-cover ring-1 ring-white/20"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6.75a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.5 20.25a7.5 7.5 0 1115 0" />
+                    </svg>
+                  )}
+                  {lang === 'en' ? `Hi, ${currentUserLabel}` : `${currentUserLabel} ،مرحباً`}
+                </button>
+              ) : null}
               {currentUser ? (
                 <div className="space-y-2 pt-2">
                   <button

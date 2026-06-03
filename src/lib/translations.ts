@@ -157,7 +157,7 @@ export const translations = {
     hoursWeekend: "الجمعة - السبت: مغلق",
     
     // Footer
-    footerText: "© 2024 جلف ستار للمحاسبة. جميع الحقوق محفوظة.",
+    footerText: "© 2026 جلف ستار للمحاسبة. جميع الحقوق محفوظة.",
     footerOurAddress: "عنواننا",
     footerConnectWithUs: "تواصل معنا",
     footerNewsletter: "نشرتنا الإخبارية",

@@ -390,7 +390,7 @@ export default async function CorporateServicesPage({
 
         <div className="relative max-w-6xl mx-auto px-4 md:px-8 pt-24 pb-16">
           <p className="inline-flex border border-white/20 rounded-full px-4 py-2 text-sm text-slate-200 mb-5">
-            {isArabic ? "ألماهي للخدمات القانونية" : "ALMAHY FOR LEGAL SERVICES"}
+            {isArabic ? "الماحي للخدمات القانونية" : "ALMAHY FOR LEGAL SERVICES"}
           </p>
           <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-5">
             {isArabic ? "خدمات الشركات" : "Corporate Services"}

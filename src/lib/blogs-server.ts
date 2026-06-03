@@ -97,6 +97,12 @@ export const getBlogBySlugFromMongo = async (slug: string): Promise<BlogPost | n
   return blog ? toBlogPost(blog) : null;
 };
 
+export const getBlogByIdFromMongo = async (id: string): Promise<BlogPost | null> => {
+  const db = await getMongoDb();
+  const blog = await db.collection<BlogDocument>(BLOGS_COLLECTION).findOne({ id });
+  return blog ? toBlogPost(blog) : null;
+};
+
 export const saveBlogToMongo = async (blog: BlogPost, updatedBy?: string): Promise<BlogPost> => {
   const db = await getMongoDb();
   const collection = db.collection<BlogDocument>(BLOGS_COLLECTION);

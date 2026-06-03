@@ -115,7 +115,7 @@ export default function Stats({ locale }: { locale: Locale }) {
           label: "Professional Team Members"
         },
         {
-          number: "30,000+",
+          number: "50,000+",
           label: "Legal Documents Processed"
         },
         {
@@ -145,7 +145,7 @@ export default function Stats({ locale }: { locale: Locale }) {
           label: "أعضاء الفريق المحترف"
         },
         {
-          number: "30,000+",
+          number: "50,000+",
           label: "الوثائق القانونية المعالجة"
         },
         {

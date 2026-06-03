@@ -39,7 +39,7 @@ async function fetchLatestLegalNews(isArabic: boolean, fallbackItems: NewsItem[]
     ? "القانون الإماراتي OR التحكيم التجاري OR النزاعات التجارية"
     : "UAE legal news OR commercial arbitration OR corporate disputes";
 
-  const apiUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=${isArabic ? "ar" : "en"}&sortBy=publishedAt&pageSize=6`;
+  const apiUrl = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&language=${isArabic ? "ar" : "en"}&sortBy=publishedAt&pageSize=10`;
 
   try {
     const response = await fetch(apiUrl, {
@@ -63,7 +63,7 @@ async function fetchLatestLegalNews(isArabic: boolean, fallbackItems: NewsItem[]
 
     const parsed = (payload.articles ?? [])
       .filter((article) => article.title && article.urlToImage)
-      .slice(0, 6)
+      .slice(0, 10)
       .map((article) => ({
         title: article.title as string,
         image: getSafeImageUrl(article.urlToImage),
@@ -180,6 +180,20 @@ export default async function LegalServicesPage({
         "Our probate services include court filings, executor representation, and structured asset distribution to protect family interests and reduce future legal complications.",
       ],
     },
+    {
+      title: "Corporate & Commercial",
+      paragraphs: [
+        "We advise on company formations, shareholder arrangements, commercial contracts, director duties, and day-to-day corporate governance for businesses in the UAE.",
+        "Our team supports acquisitions, restructurings, exits, and dispute prevention so clients can operate with confidence across onshore and free zone structures.",
+      ],
+    },
+    {
+      title: "Licensing & Regulatory",
+      paragraphs: [
+        "We help clients navigate licensing, permits, renewals, and government approvals across mainland, free zone, and sector-specific regulatory frameworks.",
+        "Our regulatory support includes compliance reviews, authority filings, and practical guidance to reduce risk and keep operations moving smoothly.",
+      ],
+    },
   ];
 
   const areaImages: Record<string, string> = {
@@ -215,6 +229,16 @@ export default async function LegalServicesPage({
           image: "https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=1200&h=700&fit=crop",
           url: "https://u.ae/ar-ae/information-and-services/justice-safety-and-the-law",
         },
+        {
+          title: "تحديثات ضريبية وتنظيمية للشركات في الإمارات",
+          image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=1200&h=700&fit=crop",
+          url: "https://u.ae/ar-ae/information-and-services/business/taxation",
+        },
+        {
+          title: "قرارات قضائية جديدة وملاحظات قانونية مهمة للمنشآت",
+          image: "https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?w=1200&h=700&fit=crop",
+          url: "https://u.ae/ar-ae/information-and-services/justice-safety-and-the-law",
+        },
       ]
     : [
         {
@@ -232,24 +256,44 @@ export default async function LegalServicesPage({
           image: "https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=1200&h=700&fit=crop",
           url: "https://u.ae/en/information-and-services/justice-safety-and-the-law",
         },
+        {
+          title: "Tax and VAT compliance updates for UAE businesses",
+          image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=1200&h=700&fit=crop",
+          url: "https://u.ae/en/information-and-services/business/taxation",
+        },
+        {
+          title: "Recent UAE court decisions and practical legal guidance",
+          image: "https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?w=1200&h=700&fit=crop",
+          url: "https://u.ae/en/information-and-services/justice-safety-and-the-law",
+        },
+        {
+          title: "Corporate governance and licensing updates for UAE companies",
+          image: "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=1200&h=700&fit=crop",
+          url: "https://u.ae/en/information-and-services/business",
+        },
+        {
+          title: "Compliance alerts for free zones, mainland companies, and startups",
+          image: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=1200&h=700&fit=crop",
+          url: "https://u.ae/en/information-and-services/business",
+        },
+        {
+          title: "Employment law and workplace compliance developments in the UAE",
+          image: "https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?w=1200&h=700&fit=crop",
+          url: "https://u.ae/en/information-and-services/jobs/employment-law",
+        },
+        {
+          title: "Commercial dispute resolution and arbitration practice updates",
+          image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=1200&h=700&fit=crop",
+          url: "https://u.ae/en/information-and-services/justice-safety-and-the-law",
+        },
+        {
+          title: "Corporate tax, VAT, and audit compliance reminders for UAE businesses",
+          image: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=1200&h=700&fit=crop",
+          url: "https://u.ae/en/information-and-services/business/taxation",
+        },
       ];
 
   const legalNews = await fetchLatestLegalNews(isArabic, fallbackNews);
-
-  const quickFacts = [
-    {
-      label: isArabic ? "مجالات قانونية" : "Practice Areas",
-      value: `${legalAreas.length}+`,
-    },
-    {
-      label: isArabic ? "تحديثات قانونية" : "Legal Updates",
-      value: `${legalNews.length}`,
-    },
-    {
-      label: isArabic ? "خدمة ثنائية اللغة" : "Bilingual Support",
-      value: isArabic ? "AR / EN" : "EN / AR",
-    },
-  ];
 
   return (
     <div className="min-h-screen w-full bg-slate-950 text-white">
@@ -264,7 +308,7 @@ export default async function LegalServicesPage({
                 {isArabic ? "الخدمات القانونية" : "Legal Services"}
               </div>
               <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-5 leading-tight">
-                {isArabic ? "ألماهي للخدمات القانونية" : "ALMAHY FOR LEGAL SERVICES"}
+                {isArabic ? "الخدمات القانونية في الماحي" : "ALMAHY FOR LEGAL SERVICES"}
               </h1>
               <p className="max-w-2xl text-base md:text-lg text-slate-200 leading-relaxed">
                 {isArabic
@@ -311,16 +355,6 @@ export default async function LegalServicesPage({
             </div>
           </div>
 
-          <div className="grid sm:grid-cols-3 gap-4 mt-10">
-            {quickFacts.map((fact) => (
-              <div key={fact.label} className="rounded-xl border border-white/10 bg-white/[0.03] px-5 py-4">
-                <p className="text-2xl font-bold" style={{ color: palette.primary }}>
-                  {fact.value}
-                </p>
-                <p className="text-sm text-slate-300">{fact.label}</p>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 

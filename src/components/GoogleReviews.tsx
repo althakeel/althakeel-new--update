@@ -1,7 +1,6 @@
 'use client';
 
 import { Locale } from '@/lib/translations';
-import { useEffect, useState } from 'react';
 
 interface Review {
   id: number;
@@ -20,51 +19,23 @@ interface ReviewsData {
 }
 
 export default function GoogleReviews({ locale }: { locale: Locale }) {
-  const [reviewsData, setReviewsData] = useState<ReviewsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
-
-  useEffect(() => {
-    async function fetchReviews() {
-      try {
-        const response = await fetch('/api/google-reviews');
-        if (!response.ok) throw new Error('Failed to fetch reviews');
-        const data = await response.json();
-        setReviewsData(data);
-      } catch (err) {
-        // Silently fall back to sample data if API key is not configured
-        // or if there's a network error
-        if (process.env.NODE_ENV === 'development') {
-          console.warn('Google Reviews API unavailable, using fallback data:', err);
-        }
-        setError(true);
-        // Fallback to sample data
-        setReviewsData({
-          rating: 5.0,
-          totalReviews: 50,
-          reviews: getFallbackReviews(locale)
-        });
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchReviews();
-  }, [locale]);
+  const reviewsData: ReviewsData = {
+    rating: 5.0,
+    totalReviews: 50,
+    reviews: getFallbackReviews(locale),
+  };
 
   const content = {
     en: {
       title: "What Our Clients Say",
       subtitle: "Trusted by businesses across the UAE",
       viewAllReviews: "View All Reviews on Google",
-      loading: "Loading reviews...",
       verifiedFrom: "Verified reviews from"
     },
     ar: {
       title: "ماذا يقول عملاؤنا",
       subtitle: "موثوق به من قبل الشركات في جميع أنحاء الإمارات",
       viewAllReviews: "عرض جميع التقييمات على جوجل",
-      loading: "جاري تحميل التقييمات...",
       verifiedFrom: "تقييمات موثقة من"
     }
   };
@@ -81,20 +52,6 @@ export default function GoogleReviews({ locale }: { locale: Locale }) {
       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
     </svg>
   );
-
-  if (loading) {
-    return (
-      <section className="w-full py-20 px-4 md:px-8 bg-gradient-to-b from-white to-gray-50">
-        <div className="max-w-[1250px] mx-auto text-center">
-          <div className="animate-pulse">
-            <div className="h-8 bg-gray-300 rounded w-64 mx-auto mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-48 mx-auto"></div>
-          </div>
-          <p className="text-gray-600 mt-8">{pageContent.loading}</p>
-        </div>
-      </section>
-    );
-  }
 
   return (
     <section className="w-full py-20 px-4 md:px-8 bg-gradient-to-b from-white to-gray-50">
@@ -113,12 +70,12 @@ export default function GoogleReviews({ locale }: { locale: Locale }) {
           <div className="flex items-center justify-center gap-2 mb-6">
             <div className="flex gap-1">
               {[1, 2, 3, 4, 5].map((star) => (
-                <StarIcon key={star} filled={star <= Math.floor(reviewsData?.rating || 5)} />
+                <StarIcon key={star} filled={star <= Math.floor(reviewsData.rating || 5)} />
               ))}
             </div>
-            <span className="text-2xl font-bold text-gray-900">{reviewsData?.rating.toFixed(1)}</span>
+            <span className="text-2xl font-bold text-gray-900">{reviewsData.rating.toFixed(1)}</span>
             <span className="text-gray-600">on Google</span>
-            {reviewsData?.totalReviews && reviewsData.totalReviews > 0 && (
+            {reviewsData.totalReviews > 0 && (
               <span className="text-gray-500">({reviewsData.totalReviews} reviews)</span>
             )}
           </div>
@@ -126,7 +83,7 @@ export default function GoogleReviews({ locale }: { locale: Locale }) {
 
         {/* Reviews Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          {reviewsData?.reviews.map((review) => (
+          {reviewsData.reviews.map((review) => (
             <div
               key={review.id}
               className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100"
@@ -206,7 +163,7 @@ function getFallbackReviews(locale: Locale): Review[] {
     en: [
       {
         id: 1,
-        name: "Ahmed Al Mansoori",
+        name: "Ahmed Al Jamal",
         rating: 5,
         date: "2 weeks ago",
         text: "Excellent accounting services! The team at Almahy Legal Services Accounting helped us streamline our financial processes and ensure full compliance with UAE tax regulations. Highly professional and responsive.",

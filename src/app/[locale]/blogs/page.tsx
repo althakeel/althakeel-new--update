@@ -16,6 +16,7 @@ export default function BlogsPage() {
   const lang: Locale = locale === 'ar' ? 'ar' : 'en';
   const isRTL = lang === 'ar';
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [blogsPageBanner, setBlogsPageBanner] = useState('');
   const [bannerCardTitle, setBannerCardTitle] = useState('');
   const [bannerCardSub, setBannerCardSub] = useState('');
@@ -23,15 +24,20 @@ export default function BlogsPage() {
 
   useEffect(() => {
     const loadServerData = async () => {
-      const [serverBlogs, bannerConfig] = await Promise.all([
-        loadBlogsFromServer(),
-        loadBlogsPageBannerConfigFromServer(),
-      ]);
+      setIsLoading(true);
+      try {
+        const [serverBlogs, bannerConfig] = await Promise.all([
+          loadBlogsFromServer(),
+          loadBlogsPageBannerConfigFromServer(),
+        ]);
 
-      setBlogs(serverBlogs);
-      setBlogsPageBanner(bannerConfig.bannerUrl);
-      setBannerCardTitle(lang === 'ar' ? bannerConfig.card.titleAr : bannerConfig.card.titleEn);
-      setBannerCardSub(lang === 'ar' ? bannerConfig.card.subAr : bannerConfig.card.subEn);
+        setBlogs(serverBlogs);
+        setBlogsPageBanner(bannerConfig.bannerUrl);
+        setBannerCardTitle(lang === 'ar' ? bannerConfig.card.titleAr : bannerConfig.card.titleEn);
+        setBannerCardSub(lang === 'ar' ? bannerConfig.card.subAr : bannerConfig.card.subEn);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     void loadServerData();
@@ -53,7 +59,7 @@ export default function BlogsPage() {
     <main className="min-h-screen bg-white" dir={isRTL ? 'rtl' : 'ltr'} style={{ fontFamily: 'Montserrat, sans-serif' }}>
 
       {/* ── Independent Blogs Page Banner ── */}
-      <div className="relative w-full bg-[#1a1a1a] overflow-hidden" style={{ minHeight: 420 }}>
+      <div className="relative w-full bg-[#1a1a1a] overflow-hidden" style={{ minHeight: 390 }}>
         {/* Background image */}
         <img
           src={effectiveBanner}
@@ -66,7 +72,7 @@ export default function BlogsPage() {
         {/* Card overlay */}
         <div
           className={`relative z-10 flex items-end ${isRTL ? 'justify-start md:justify-end' : 'justify-start'}`}
-          style={{ minHeight: 420 }}
+          style={{ minHeight: 390 }}
         >
           <div
             className={`m-5 md:m-12 w-[min(92%,560px)] rounded-2xl border border-white/30 bg-white/20 p-6 md:p-8 shadow-2xl backdrop-blur-md ${
@@ -97,11 +103,27 @@ export default function BlogsPage() {
         <p className="text-[10px] tracking-[0.25em] uppercase font-bold text-[#DE3B34] mb-1">{tx.label}</p>
         <h2 className="text-3xl md:text-4xl font-extrabold text-[#160A0A] mb-10">{tx.heading}</h2>
 
-        {blogs.length === 0 && (
+        {!isLoading && blogs.length === 0 && (
           <p className="text-slate-400 text-sm">{tx.noBlogs}</p>
         )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+          {isLoading && Array.from({ length: 6 }).map((_, index) => (
+            <article key={`skeleton-${index}`} className="flex flex-col overflow-hidden rounded-sm border border-slate-200/80 animate-pulse">
+              <div className="w-full h-52 bg-slate-200" />
+              <div className="pt-4 px-5 pb-5">
+                <div className="h-5 w-[88%] bg-slate-200 rounded mb-2" />
+                <div className="h-5 w-[70%] bg-slate-200 rounded mb-4" />
+                <div className="h-3 w-24 bg-slate-200 rounded mb-4" />
+                <div className="w-8 h-0.5 bg-slate-200 mb-4" />
+                <div className="h-3 w-full bg-slate-200 rounded mb-2" />
+                <div className="h-3 w-[95%] bg-slate-200 rounded mb-2" />
+                <div className="h-3 w-[80%] bg-slate-200 rounded mb-5" />
+                <div className="h-3 w-28 bg-slate-200 rounded" />
+              </div>
+            </article>
+          ))}
+
           {blogs.map((blog) => (
             <article key={blog.id} className="flex flex-col group shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden rounded-sm">
               {(() => {
@@ -151,7 +173,7 @@ export default function BlogsPage() {
         </div>
 
         {/* More Posts button */}
-        {blogs.length > 0 && (
+        {!isLoading && blogs.length > 0 && (
           <div className="flex justify-center mt-14">
             <button
               className="px-10 py-3 bg-[#DE3B34] text-white text-xs font-bold tracking-[0.25em] uppercase hover:bg-[#9B0F09] transition-colors"

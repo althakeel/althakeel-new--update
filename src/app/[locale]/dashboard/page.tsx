@@ -19,6 +19,7 @@ import {
   getPrimaryAdminEmail,
   listDashboardUsers,
   normalizeEmail,
+  normalizeUsername,
   revokeDashboardAccess,
 } from '@/lib/admin-access';
 import {
@@ -43,6 +44,8 @@ export default function Dashboard() {
   const [accessRole, setAccessRole] = useState<'admin' | 'editor' | null>(null);
   const [accessUsers, setAccessUsers] = useState<DashboardAccessRecord[]>([]);
   const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteUsername, setInviteUsername] = useState('');
+  const [invitePassword, setInvitePassword] = useState('');
   const [permissionPreset, setPermissionPreset] = useState<'all' | 'blogs'>('all');
   const [isAccessActionLoading, setIsAccessActionLoading] = useState(false);
   const [accessFeedback, setAccessFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -61,6 +64,7 @@ export default function Dashboard() {
   const [blogBannerImage, setBlogBannerImage] = useState('');
   const [blogBannerImageAr, setBlogBannerImageAr] = useState('');
   const [blogsPageBanner, setBlogsPageBanner] = useState('');
+  const [isCreateBlogFormOpen, setIsCreateBlogFormOpen] = useState(false);
   const [bannerCardTitleEn, setBannerCardTitleEn] = useState('');
   const [bannerCardTitleAr, setBannerCardTitleAr] = useState('');
   const [bannerCardSubEn, setBannerCardSubEn] = useState('');
@@ -70,6 +74,9 @@ export default function Dashboard() {
   const [isUploadingImageAr, setIsUploadingImageAr] = useState(false);
   const [isUploadingBannerImageAr, setIsUploadingBannerImageAr] = useState(false);
   const [isUploadingPageBanner, setIsUploadingPageBanner] = useState(false);
+  const [isRefreshingAutoImages, setIsRefreshingAutoImages] = useState(false);
+  const [isAddingKhaleejBlogs, setIsAddingKhaleejBlogs] = useState(false);
+  const [refreshingBlogId, setRefreshingBlogId] = useState<string | null>(null);
   const [blogFeedback, setBlogFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [allowedSections, setAllowedSections] = useState({
     dashboard: true,
@@ -111,7 +118,13 @@ export default function Dashboard() {
     });
   };
 
-  const sendInvitationEmail = async (payload: { email: string; locale: string; type?: 'invite' | 'approved' }) => {
+  const sendInvitationEmail = async (payload: {
+    email: string;
+    locale: string;
+    type?: 'invite' | 'approved';
+    username?: string;
+    password?: string;
+  }) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 12000);
 
@@ -130,10 +143,61 @@ export default function Dashboard() {
     }
   };
 
+  const provisionCustomerCredentials = async (payload: { email: string; username?: string; password: string }) => {
+    const currentUser = user || auth.currentUser;
+    if (!currentUser) {
+      return {
+        success: false,
+        message: locale === 'ar' ? 'المستخدم غير مسجل الدخول.' : 'Admin session is not available.',
+      };
+    }
+
+    const idToken = await currentUser.getIdToken();
+    const response = await fetch('/api/admin/users/provision', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result?.success) {
+      return {
+        success: false,
+        message:
+          typeof result?.message === 'string' && result.message.trim()
+            ? result.message
+            : locale === 'ar'
+              ? 'تعذر إنشاء بيانات الدخول للمستخدم.'
+              : 'Failed to provision user credentials.',
+      };
+    }
+
+    return { success: true, message: '' };
+  };
+
   const loadAccessUsers = async () => {
     try {
       const nextUsers = await listDashboardUsers();
-      setAccessUsers((currentUsers) => (nextUsers.length === 0 && currentUsers.length > 0 ? currentUsers : nextUsers));
+      setAccessUsers((currentUsers) => {
+        const merged = new Map<string, DashboardAccessRecord>();
+
+        for (const userItem of [...getCachedDashboardUsers(), ...currentUsers, ...nextUsers]) {
+          merged.set(normalizeEmail(userItem.email), userItem);
+        }
+
+        return Array.from(merged.values()).sort((left, right) => {
+          if (left.role !== right.role) {
+            return left.role === 'admin' ? -1 : 1;
+          }
+          if (left.status !== right.status) {
+            return left.status === 'pending' ? -1 : 1;
+          }
+          return left.email.localeCompare(right.email);
+        });
+      });
     } catch (error) {
       console.error('Load access users error:', error);
       setAccessFeedback({
@@ -187,6 +251,7 @@ export default function Dashboard() {
         setAccessUsers(cachedUsers.length > 0 ? cachedUsers : [fallbackAdminUser]);
         setAccessDenied(false);
         setLoading(false);
+        void loadAccessUsers();
 
         void withTimeout(ensurePrimaryAdminAccess(email), 10000)
           .then((result) => {
@@ -323,12 +388,20 @@ export default function Dashboard() {
     }
   }, [activeSection, accessRole]);
 
-  const handleApproveAccess = async (emailToApprove?: string) => {
+  useEffect(() => {
+    if (accessRole === 'admin' && activeSection === 'access') {
+      void loadAccessUsers();
+    }
+  }, [accessRole, activeSection]);
+
+  const handleApproveAccess = async (emailToApprove?: string, usernameToApprove?: string) => {
     if (!user?.email) {
       return;
     }
 
     const normalizedInviteEmail = normalizeEmail(emailToApprove || inviteEmail);
+    const normalizedInviteUsername = normalizeUsername(usernameToApprove || inviteUsername);
+    const normalizedInvitePassword = invitePassword.trim();
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedInviteEmail);
 
     if (!isEmail) {
@@ -339,13 +412,25 @@ export default function Dashboard() {
       return;
     }
 
+    if (normalizedInvitePassword.length < 6) {
+      setAccessFeedback({
+        type: 'error',
+        message:
+          locale === 'ar'
+            ? 'يرجى إدخال كلمة مرور لا تقل عن 6 أحرف.'
+            : 'Please provide a password with at least 6 characters.',
+      });
+      return;
+    }
+
     try {
       setIsAccessActionLoading(true);
       const approvalSave = await withTimeout(
         approveDashboardAccess(
           normalizedInviteEmail,
           user.email,
-          permissionPreset === 'all' ? FULL_PERMISSIONS : BLOGS_ONLY_PERMISSIONS
+          permissionPreset === 'all' ? FULL_PERMISSIONS : BLOGS_ONLY_PERMISSIONS,
+          normalizedInviteUsername || undefined
         ),
         12000
       );
@@ -365,25 +450,45 @@ export default function Dashboard() {
         throw approvalSave.error;
       }
 
+      const provisionResult = await provisionCustomerCredentials({
+        email: normalizedInviteEmail,
+        username: normalizedInviteUsername || undefined,
+        password: normalizedInvitePassword,
+      });
+
       const { response: inviteResponse, result: inviteResult } = await sendInvitationEmail({
         email: normalizedInviteEmail,
         locale,
         type: 'approved',
+        username: provisionResult.success ? normalizedInviteUsername || undefined : undefined,
+        password: provisionResult.success ? normalizedInvitePassword : undefined,
       });
 
       setInviteEmail('');
-      setAccessFeedback({
-        type: inviteResponse.ok && inviteResult?.success ? 'success' : 'error',
-        message: inviteResponse.ok && inviteResult?.success
-          ? locale === 'ar'
-            ? 'تمت الموافقة وإرسال رسالة الدعوة عبر البريد الإلكتروني.'
-            : 'Access approved and invitation email sent successfully.'
-          : (typeof inviteResult?.message === 'string' && inviteResult.message.trim())
-            ? inviteResult.message
-            : locale === 'ar'
-              ? 'تمت الموافقة لكن فشل إرسال البريد. تحقق من إعدادات Resend.'
-              : 'Access approved, but invitation email failed to send. Check Resend configuration.',
-      });
+      setInviteUsername('');
+      setInvitePassword('');
+      if (provisionResult.success) {
+        setAccessFeedback({
+          type: inviteResponse.ok && inviteResult?.success ? 'success' : 'error',
+          message: inviteResponse.ok && inviteResult?.success
+            ? locale === 'ar'
+              ? 'تمت الموافقة وإنشاء اسم المستخدم/كلمة المرور وإرسال البريد بنجاح.'
+              : 'Access approved, username/password provisioned, and email sent successfully.'
+            : (typeof inviteResult?.message === 'string' && inviteResult.message.trim())
+              ? inviteResult.message
+              : locale === 'ar'
+                ? 'تمت الموافقة وإنشاء بيانات الدخول لكن فشل إرسال البريد. تحقق من إعدادات Resend.'
+                : 'Access approved and credentials provisioned, but email failed to send. Check Resend configuration.',
+        });
+      } else {
+        setAccessFeedback({
+          type: 'error',
+          message:
+            locale === 'ar'
+              ? `تمت الموافقة لكن تعذر إنشاء اسم المستخدم/كلمة المرور: ${provisionResult.message}`
+              : `Access approved, but username/password provisioning failed: ${provisionResult.message}`,
+        });
+      }
       await loadAccessUsers();
     } catch (error) {
       console.error('Approve access error:', error);
@@ -403,6 +508,7 @@ export default function Dashboard() {
 
   const handleSendInvitation = async () => {
     const normalizedInviteEmail = normalizeEmail(inviteEmail);
+    const normalizedInviteUsername = normalizeUsername(inviteUsername);
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedInviteEmail);
 
     if (!isEmail) {
@@ -415,7 +521,10 @@ export default function Dashboard() {
 
     try {
       setIsAccessActionLoading(true);
-      const requestSave = await withTimeout(ensureDashboardAccessRequest(normalizedInviteEmail), 12000);
+      const requestSave = await withTimeout(
+        ensureDashboardAccessRequest(normalizedInviteEmail, normalizedInviteUsername || undefined),
+        12000
+      );
 
       if (requestSave.timedOut) {
         setAccessFeedback({
@@ -581,6 +690,7 @@ export default function Dashboard() {
 
   const resetBlogForm = () => {
     setEditingBlogId(null);
+    setIsCreateBlogFormOpen(false);
     setBlogTitle('');
     setBlogTitleAr('');
     setBlogDate('');
@@ -652,6 +762,7 @@ export default function Dashboard() {
   };
 
   const handleEditBlog = (blog: BlogPost) => {
+    setIsCreateBlogFormOpen(true);
     setEditingBlogId(blog.id);
     setBlogTitle(blog.title);
     setBlogTitleAr(blog.titleAr || '');
@@ -687,6 +798,135 @@ export default function Dashboard() {
         type: 'error',
         message: locale === 'ar' ? 'تعذر حذف المقالة.' : 'Failed to delete blog.',
       });
+    }
+  };
+
+  const handleRefreshDuplicateAutoImages = async () => {
+    try {
+      setIsRefreshingAutoImages(true);
+      setBlogFeedback(null);
+
+      const response = await fetch('/api/blogs/auto-daily?refreshImages=1&onlyDuplicates=1', {
+        method: 'POST',
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.message || 'Failed to refresh auto blog images.');
+      }
+
+      const serverBlogs = await loadBlogsFromServer();
+      setBlogs(serverBlogs);
+
+      const refreshedCount = Number(result?.refreshed || 0);
+      setBlogFeedback({
+        type: 'success',
+        message:
+          refreshedCount > 0
+            ? locale === 'ar'
+              ? `تم تحديث ${refreshedCount} صورة للمقالات التلقائية.`
+              : `Refreshed ${refreshedCount} auto-blog image(s).`
+            : locale === 'ar'
+              ? 'لا توجد صور مكررة للمقالات التلقائية للتحديث.'
+              : 'No duplicate auto-blog images found to refresh.',
+      });
+    } catch (error) {
+      console.error('Refresh duplicate auto images error:', error);
+      setBlogFeedback({
+        type: 'error',
+        message:
+          error instanceof Error && error.message
+            ? error.message
+            : locale === 'ar'
+              ? 'تعذر تحديث صور المقالات التلقائية.'
+              : 'Failed to refresh auto-blog images.',
+      });
+    } finally {
+      setIsRefreshingAutoImages(false);
+    }
+  };
+
+  const handleRefreshSingleBlogImage = async (blog: BlogPost) => {
+    try {
+      setRefreshingBlogId(blog.id);
+      setBlogFeedback(null);
+
+      const response = await fetch(`/api/blogs/auto-daily?refreshImages=1&blogId=${encodeURIComponent(blog.id)}`, {
+        method: 'POST',
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.message || 'Failed to refresh this blog image.');
+      }
+
+      const serverBlogs = await loadBlogsFromServer();
+      setBlogs(serverBlogs);
+      setBlogFeedback({
+        type: 'success',
+        message:
+          locale === 'ar'
+            ? 'تم تحديث صورة المقالة المحددة.'
+            : 'Selected blog image refreshed successfully.',
+      });
+    } catch (error) {
+      console.error('Refresh single blog image error:', error);
+      setBlogFeedback({
+        type: 'error',
+        message:
+          error instanceof Error && error.message
+            ? error.message
+            : locale === 'ar'
+              ? 'تعذر تحديث صورة المقالة.'
+              : 'Failed to refresh selected blog image.',
+      });
+    } finally {
+      setRefreshingBlogId(null);
+    }
+  };
+
+  const handleAddKhaleejBlogs = async () => {
+    try {
+      setIsAddingKhaleejBlogs(true);
+      setBlogFeedback(null);
+
+      const response = await fetch('/api/blogs/auto-daily?addKhaleej=1&count=5', {
+        method: 'POST',
+      });
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result?.success) {
+        throw new Error(result?.message || 'Failed to add Khaleej blogs.');
+      }
+
+      const serverBlogs = await loadBlogsFromServer();
+      setBlogs(serverBlogs);
+
+      const createdCount = Number(result?.created || 0);
+      setBlogFeedback({
+        type: 'success',
+        message:
+          createdCount > 0
+            ? locale === 'ar'
+              ? `تمت إضافة ${createdCount} مقالات من خليج تايمز.`
+              : `Added ${createdCount} blog(s) from Khaleej Times.`
+            : locale === 'ar'
+              ? 'لم يتم العثور على مقالات جديدة من خليج تايمز.'
+              : 'No new Khaleej Times articles were available to add.',
+      });
+    } catch (error) {
+      console.error('Add Khaleej blogs error:', error);
+      setBlogFeedback({
+        type: 'error',
+        message:
+          error instanceof Error && error.message
+            ? error.message
+            : locale === 'ar'
+              ? 'تعذر إضافة مقالات خليج تايمز.'
+              : 'Failed to add Khaleej blogs.',
+      });
+    } finally {
+      setIsAddingKhaleejBlogs(false);
     }
   };
 
@@ -977,13 +1217,29 @@ export default function Dashboard() {
               </p>
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_auto]">
-                <input
-                  type="email"
-                  value={inviteEmail}
-                  onChange={(event) => setInviteEmail(event.target.value)}
-                  placeholder={locale === 'ar' ? 'أدخل البريد الإلكتروني للموافقة عليه' : 'Enter an email to approve'}
-                  className="w-full rounded-xl border border-[#CECDCB] bg-white px-4 py-3 text-slate-900 outline-none focus:border-[#DE3B34]"
-                />
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:col-span-2">
+                  <input
+                    type="email"
+                    value={inviteEmail}
+                    onChange={(event) => setInviteEmail(event.target.value)}
+                    placeholder={locale === 'ar' ? 'أدخل البريد الإلكتروني للموافقة عليه' : 'Enter an email to approve'}
+                    className="w-full rounded-xl border border-[#CECDCB] bg-white px-4 py-3 text-slate-900 outline-none focus:border-[#DE3B34]"
+                  />
+                  <input
+                    type="text"
+                    value={inviteUsername}
+                    onChange={(event) => setInviteUsername(event.target.value)}
+                    placeholder={locale === 'ar' ? 'اسم المستخدم (اختياري)' : 'Username (optional)'}
+                    className="w-full rounded-xl border border-[#CECDCB] bg-white px-4 py-3 text-slate-900 outline-none focus:border-[#DE3B34]"
+                  />
+                  <input
+                    type="password"
+                    value={invitePassword}
+                    onChange={(event) => setInvitePassword(event.target.value)}
+                    placeholder={locale === 'ar' ? 'كلمة المرور (مطلوبة للموافقة)' : 'Password (required for approval)'}
+                    className="w-full rounded-xl border border-[#CECDCB] bg-white px-4 py-3 text-slate-900 outline-none focus:border-[#DE3B34]"
+                  />
+                </div>
                 <select
                   value={permissionPreset}
                   onChange={(event) => setPermissionPreset(event.target.value as 'all' | 'blogs')}
@@ -1053,6 +1309,11 @@ export default function Dashboard() {
                     <article key={accessUser.email} className="flex flex-col gap-3 rounded-xl border border-[#CECDCB] p-4 md:flex-row md:items-center md:justify-between">
                       <div>
                         <p className="font-semibold text-[#160A0A]">{accessUser.email}</p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {locale === 'ar'
+                            ? `اسم المستخدم: ${accessUser.username || '-'}`
+                            : `Username: ${accessUser.username || '-'}`}
+                        </p>
                         <p className="mt-1 text-sm text-slate-600">
                           {locale === 'ar'
                             ? `${accessUser.role === 'admin' ? 'مدير' : 'محرر'} - ${accessUser.status === 'active' ? 'نشط' : 'بانتظار الموافقة'}`
@@ -1075,7 +1336,7 @@ export default function Dashboard() {
                             {accessUser.status !== 'active' ? (
                               <button
                                 type="button"
-                                onClick={() => void handleApproveAccess(accessUser.email)}
+                                onClick={() => void handleApproveAccess(accessUser.email, accessUser.username)}
                                 className="rounded-lg border border-emerald-200 px-3 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 transition-colors"
                               >
                                 {locale === 'ar' ? 'موافقة' : 'Approve'}
@@ -1212,17 +1473,46 @@ export default function Dashboard() {
             </section>
 
             <section className="rounded-2xl bg-white p-6 md:p-8 shadow-sm">
-              <h1 className="text-2xl md:text-3xl font-bold text-[#160A0A] mb-6">
-                {editingBlogId
-                  ? locale === 'ar'
-                    ? 'تعديل المقالة'
-                    : 'Edit Blog Post'
-                  : locale === 'ar'
-                    ? 'إضافة مقالة جديدة'
-                    : 'Create Blog Post'}
-              </h1>
+              <div className="mb-6 flex items-center justify-between gap-4">
+                <h1 className="text-2xl md:text-3xl font-bold text-[#160A0A]">
+                  {editingBlogId
+                    ? locale === 'ar'
+                      ? 'تعديل المقالة'
+                      : 'Edit Blog Post'
+                    : locale === 'ar'
+                      ? 'إضافة مقالة جديدة'
+                      : 'Create Blog Post'}
+                </h1>
 
-              <form className="space-y-4" onSubmit={handleCreateBlog}>
+                {editingBlogId ? (
+                  <button
+                    type="button"
+                    onClick={resetBlogForm}
+                    className="rounded-xl border border-[#CECDCB] px-4 py-2 text-sm font-semibold text-[#160A0A] hover:bg-[#F1EFF0] transition-colors"
+                  >
+                    {locale === 'ar' ? 'إلغاء' : 'Cancel'}
+                  </button>
+                ) : isCreateBlogFormOpen ? (
+                  <button
+                    type="button"
+                    onClick={resetBlogForm}
+                    className="rounded-xl border border-[#CECDCB] px-4 py-2 text-sm font-semibold text-[#160A0A] hover:bg-[#F1EFF0] transition-colors"
+                  >
+                    {locale === 'ar' ? 'إغلاق' : 'Close'}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateBlogFormOpen(true)}
+                    className="rounded-xl bg-[#DE3B34] px-4 py-2 text-sm font-semibold text-white hover:bg-[#9B0F09] transition-colors"
+                  >
+                    {locale === 'ar' ? 'فتح نموذج إنشاء المقالة' : 'Open Create Blog Form'}
+                  </button>
+                )}
+              </div>
+
+              {editingBlogId || isCreateBlogFormOpen ? (
+                <form className="space-y-4" onSubmit={handleCreateBlog}>
                 <input
                   type="text"
                   placeholder={locale === 'ar' ? 'عنوان المقالة' : 'Blog title'}
@@ -1415,7 +1705,23 @@ export default function Dashboard() {
                     {locale === 'ar' ? 'إلغاء' : 'Cancel'}
                   </button>
                 ) : null}
-              </form>
+                </form>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-[#CECDCB] bg-[#F8F7F7] p-6">
+                  <p className="text-sm text-slate-600">
+                    {locale === 'ar'
+                      ? 'اضغط على زر فتح نموذج إنشاء المقالة لإظهار النموذج.'
+                      : 'Click Open Create Blog Form to show the blog creation form.'}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateBlogFormOpen(true)}
+                    className="mt-4 rounded-xl bg-[#DE3B34] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#9B0F09] transition-colors"
+                  >
+                    {locale === 'ar' ? 'فتح النموذج' : 'Open Form'}
+                  </button>
+                </div>
+              )}
             </section>
 
             <section className="rounded-2xl bg-white p-6 md:p-8 shadow-sm">
@@ -1423,9 +1729,46 @@ export default function Dashboard() {
                 <h2 className="text-xl font-bold text-[#160A0A]">
                   {locale === 'ar' ? 'المقالات المنشورة' : 'Published Blogs'}
                 </h2>
-                <Link href={`/${locale}/blogs`} className="text-sm font-semibold text-[#DE3B34] hover:text-[#9B0F09]">
-                  {locale === 'ar' ? 'عرض صفحة المدونة' : 'View Blogs Page'}
-                </Link>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsCreateBlogFormOpen(true)}
+                    className="rounded-lg border border-[#CECDCB] px-3 py-2 text-xs font-semibold text-[#160A0A] hover:bg-[#F1EFF0] transition-colors"
+                  >
+                    {locale === 'ar' ? 'فتح نموذج إنشاء المقالة' : 'Open Create Blog Form'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleAddKhaleejBlogs()}
+                    disabled={isAddingKhaleejBlogs}
+                    className="rounded-lg border border-[#CECDCB] px-3 py-2 text-xs font-semibold text-[#160A0A] hover:bg-[#F1EFF0] transition-colors disabled:opacity-60"
+                  >
+                    {isAddingKhaleejBlogs
+                      ? locale === 'ar'
+                        ? 'جارٍ إضافة مقالات...'
+                        : 'Adding Blogs...'
+                      : locale === 'ar'
+                        ? 'إضافة 5 مقالات من خليج'
+                        : 'Add 5 Khaleej Blogs'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleRefreshDuplicateAutoImages()}
+                    disabled={isRefreshingAutoImages}
+                    className="rounded-lg border border-[#CECDCB] px-3 py-2 text-xs font-semibold text-[#160A0A] hover:bg-[#F1EFF0] transition-colors disabled:opacity-60"
+                  >
+                    {isRefreshingAutoImages
+                      ? locale === 'ar'
+                        ? 'جارٍ تحديث الصور...'
+                        : 'Refreshing Images...'
+                      : locale === 'ar'
+                        ? 'تحديث الصور المكررة تلقائياً'
+                        : 'Refresh Duplicate Images'}
+                  </button>
+                  <Link href={`/${locale}/blogs`} className="text-sm font-semibold text-[#DE3B34] hover:text-[#9B0F09]">
+                    {locale === 'ar' ? 'عرض صفحة المدونة' : 'View Blogs Page'}
+                  </Link>
+                </div>
               </div>
 
               {blogs.length === 0 ? (
@@ -1472,6 +1815,20 @@ export default function Dashboard() {
                       </p>
 
                       <div className="mt-4 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => void handleRefreshSingleBlogImage(blog)}
+                          disabled={refreshingBlogId === blog.id}
+                          className="rounded-lg border border-[#CECDCB] px-3 py-2 text-xs font-semibold text-[#160A0A] hover:bg-[#F1EFF0] transition-colors disabled:opacity-60"
+                        >
+                          {refreshingBlogId === blog.id
+                            ? locale === 'ar'
+                              ? 'جارٍ التحديث...'
+                              : 'Refreshing...'
+                            : locale === 'ar'
+                              ? 'تحديث الصورة'
+                              : 'Refresh Image'}
+                        </button>
                         <button
                           type="button"
                           onClick={() => handleEditBlog(blog)}

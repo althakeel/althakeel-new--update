@@ -1,4 +1,4 @@
-import { collection, deleteDoc, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, limit, query, setDoc, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 export type DashboardAccessRole = 'admin' | 'editor';
@@ -27,6 +27,8 @@ export const BLOGS_ONLY_PERMISSIONS: DashboardPermissions = {
 
 export interface DashboardAccessRecord {
   email: string;
+  username?: string;
+  usernameNormalized?: string;
   role: DashboardAccessRole;
   status: DashboardAccessStatus;
   permissions: DashboardPermissions;
@@ -107,13 +109,39 @@ export const getCachedDashboardUsers = () => {
 
 export const normalizeEmail = (email: string) => email.trim().toLowerCase();
 
+export const normalizeUsername = (username: string) => username.trim().toLowerCase().replace(/\s+/g, '');
+
+const normalizeRecordUsername = (record: DashboardAccessRecord): DashboardAccessRecord => {
+  if (!record.username && !record.usernameNormalized) {
+    return record;
+  }
+
+  const normalizedUsername = normalizeUsername(record.usernameNormalized || record.username || '');
+  if (!normalizedUsername) {
+    return {
+      ...record,
+      username: undefined,
+      usernameNormalized: undefined,
+    };
+  }
+
+  return {
+    ...record,
+    username: normalizedUsername,
+    usernameNormalized: normalizedUsername,
+  };
+};
+
 const getAccessDocId = (email: string) => encodeURIComponent(normalizeEmail(email));
 
-const submitDashboardAccessRequest = async (email: string) => {
+const submitDashboardAccessRequest = async (email: string, username?: string) => {
   const normalizedEmail = normalizeEmail(email);
+  const normalizedUsername = normalizeUsername(username || '');
   const now = Date.now();
   const payload: DashboardAccessRecord = {
     email: normalizedEmail,
+    username: normalizedUsername || undefined,
+    usernameNormalized: normalizedUsername || undefined,
     role: 'editor',
     status: 'pending',
     permissions: BLOGS_ONLY_PERMISSIONS,
@@ -122,6 +150,7 @@ const submitDashboardAccessRequest = async (email: string) => {
   };
 
   try {
+    await assertUsernameAvailableForEmail(normalizedUsername, normalizedEmail);
     await setDoc(doc(db, DASHBOARD_REQUESTS_COLLECTION, getAccessDocId(normalizedEmail)), payload, { merge: true });
     setCachedAccess(payload);
     return payload;
@@ -202,7 +231,7 @@ export const getDashboardAccess = async (email: string): Promise<DashboardAccess
       return null;
     }
 
-    const access = snapshot.data() as DashboardAccessRecord;
+    const access = normalizeRecordUsername(snapshot.data() as DashboardAccessRecord);
     setCachedAccess(access);
     return access;
   } catch (error) {
@@ -214,8 +243,9 @@ export const getDashboardAccess = async (email: string): Promise<DashboardAccess
   }
 };
 
-export const ensureDashboardAccessRequest = async (email: string) => {
+export const ensureDashboardAccessRequest = async (email: string, username?: string) => {
   const normalizedEmail = normalizeEmail(email);
+  const normalizedUsername = normalizeUsername(username || '');
   if (!normalizedEmail) {
     return null;
   }
@@ -230,7 +260,7 @@ export const ensureDashboardAccessRequest = async (email: string) => {
       return existing;
     }
 
-    const request = await submitDashboardAccessRequest(normalizedEmail);
+    const request = await submitDashboardAccessRequest(normalizedEmail, normalizedUsername || undefined);
     return request;
   } catch (error) {
     if (isOfflineFirestoreError(error)) {
@@ -239,7 +269,7 @@ export const ensureDashboardAccessRequest = async (email: string) => {
         return cached;
       }
 
-      return submitDashboardAccessRequest(normalizedEmail);
+      return submitDashboardAccessRequest(normalizedEmail, normalizedUsername || undefined);
     }
 
     throw error;
@@ -249,7 +279,8 @@ export const ensureDashboardAccessRequest = async (email: string) => {
 export const approveDashboardAccess = async (
   email: string,
   approvedBy: string,
-  permissions: DashboardPermissions = FULL_PERMISSIONS
+  permissions: DashboardPermissions = FULL_PERMISSIONS,
+  username?: string
 ) => {
   const normalizedEmail = normalizeEmail(email);
   if (!normalizedEmail) {
@@ -267,8 +298,12 @@ export const approveDashboardAccess = async (
     const existing = await getDoc(accessRef);
     const existingData = existing.exists() ? (existing.data() as DashboardAccessRecord) : null;
 
+    const normalizedUsername = normalizeUsername(username || existingData?.username || existingData?.usernameNormalized || '');
+    await assertUsernameAvailableForEmail(normalizedUsername, normalizedEmail);
     const payload: DashboardAccessRecord = {
       email: normalizedEmail,
+      username: normalizedUsername || undefined,
+      usernameNormalized: normalizedUsername || undefined,
       role: existingData?.role === 'admin' ? 'admin' : 'editor',
       status: 'active',
       permissions,
@@ -286,6 +321,8 @@ export const approveDashboardAccess = async (
       const cached = getCachedAccess(normalizedEmail);
       const payload: DashboardAccessRecord = {
         email: normalizedEmail,
+        username: normalizeUsername(username || cached?.username || cached?.usernameNormalized || '') || undefined,
+        usernameNormalized: normalizeUsername(username || cached?.username || cached?.usernameNormalized || '') || undefined,
         role: cached?.role === 'admin' ? 'admin' : 'editor',
         status: 'active',
         permissions,
@@ -307,7 +344,7 @@ export const listDashboardUsers = async () => {
     const requestSnapshot = await getDocs(collection(db, DASHBOARD_REQUESTS_COLLECTION));
 
     const approvedItems = snapshot.docs
-      .map((item) => item.data() as DashboardAccessRecord)
+      .map((item) => normalizeRecordUsername(item.data() as DashboardAccessRecord))
       .sort((left, right) => {
         if (left.role !== right.role) {
           return left.role === 'admin' ? -1 : 1;
@@ -317,7 +354,7 @@ export const listDashboardUsers = async () => {
 
     const approvedEmails = new Set(approvedItems.map((item) => normalizeEmail(item.email)));
     const pendingItems = requestSnapshot.docs
-      .map((item) => item.data() as DashboardAccessRecord)
+      .map((item) => normalizeRecordUsername(item.data() as DashboardAccessRecord))
       .filter((item) => !approvedEmails.has(normalizeEmail(item.email)));
 
     const items = [...approvedItems, ...pendingItems].sort((left, right) => {
@@ -373,4 +410,98 @@ export const revokeDashboardAccess = async (email: string) => {
   await deleteDoc(doc(db, DASHBOARD_ACCESS_COLLECTION, getAccessDocId(normalizedEmail)));
   await deleteDoc(doc(db, DASHBOARD_REQUESTS_COLLECTION, getAccessDocId(normalizedEmail)));
   removeCachedAccess(normalizedEmail);
+};
+
+const findCachedByUsername = (username: string): DashboardAccessRecord | null => {
+  const normalizedUsername = normalizeUsername(username);
+  if (!normalizedUsername) {
+    return null;
+  }
+
+  const cachedItems = Object.values(readAccessCache());
+  for (const item of cachedItems) {
+    const itemUsername = normalizeUsername(item.usernameNormalized || item.username || '');
+    if (itemUsername && itemUsername === normalizedUsername) {
+      return item;
+    }
+  }
+
+  return null;
+};
+
+const findDashboardRecordByUsername = async (
+  collectionName: string,
+  username: string
+): Promise<DashboardAccessRecord | null> => {
+  const normalizedUsername = normalizeUsername(username);
+  if (!normalizedUsername) {
+    return null;
+  }
+
+  const recordsQuery = query(
+    collection(db, collectionName),
+    where('usernameNormalized', '==', normalizedUsername),
+    limit(1)
+  );
+  const snapshot = await getDocs(recordsQuery);
+  if (snapshot.empty) {
+    return null;
+  }
+
+  return normalizeRecordUsername(snapshot.docs[0].data() as DashboardAccessRecord);
+};
+
+const assertUsernameAvailableForEmail = async (username: string, email: string): Promise<void> => {
+  const normalizedUsername = normalizeUsername(username);
+  if (!normalizedUsername) {
+    return;
+  }
+
+  const normalizedEmail = normalizeEmail(email);
+  const existingInAccess = await findDashboardRecordByUsername(DASHBOARD_ACCESS_COLLECTION, normalizedUsername);
+  if (existingInAccess && normalizeEmail(existingInAccess.email) !== normalizedEmail) {
+    throw new Error('Username is already used by another account.');
+  }
+
+  const existingInRequests = await findDashboardRecordByUsername(DASHBOARD_REQUESTS_COLLECTION, normalizedUsername);
+  if (existingInRequests && normalizeEmail(existingInRequests.email) !== normalizedEmail) {
+    throw new Error('Username is already used by another account.');
+  }
+};
+
+export const resolveDashboardLoginEmail = async (identifier: string): Promise<string | null> => {
+  const normalizedIdentifier = identifier.trim();
+  if (!normalizedIdentifier) {
+    return null;
+  }
+
+  const maybeEmail = normalizeEmail(normalizedIdentifier);
+  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(maybeEmail);
+  if (isEmail) {
+    return maybeEmail;
+  }
+
+  try {
+    const fromAccess = await findDashboardRecordByUsername(DASHBOARD_ACCESS_COLLECTION, normalizedIdentifier);
+    if (fromAccess?.email) {
+      setCachedAccess(fromAccess);
+      return normalizeEmail(fromAccess.email);
+    }
+
+    const fromRequests = await findDashboardRecordByUsername(DASHBOARD_REQUESTS_COLLECTION, normalizedIdentifier);
+    if (fromRequests?.email) {
+      setCachedAccess(fromRequests);
+      return normalizeEmail(fromRequests.email);
+    }
+
+    const cached = findCachedByUsername(normalizedIdentifier);
+    return cached?.email ? normalizeEmail(cached.email) : null;
+  } catch (error) {
+    if (isOfflineFirestoreError(error)) {
+      const cached = findCachedByUsername(normalizedIdentifier);
+      return cached?.email ? normalizeEmail(cached.email) : null;
+    }
+
+    throw error;
+  }
 };

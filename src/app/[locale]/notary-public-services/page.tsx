@@ -88,7 +88,7 @@ export default async function NotaryPublicServicesPage({
 
         <div className="relative max-w-6xl mx-auto px-4 md:px-8 pt-24 pb-16 text-center flex flex-col items-center">
           <p className="inline-flex rounded-full border border-white/20 px-4 py-2 text-sm text-slate-200 mb-5">
-            {isArabic ? "ألماهي للخدمات القانونية" : "AUTHORIZED LEGAL AND NOTARY SERVICES"}
+            {isArabic ? "الماحي للخدمات القانونية" : "AUTHORIZED LEGAL AND NOTARY SERVICES"}
           </p>
           <h1 className="text-4xl md:text-6xl font-bold leading-tight mb-5 max-w-5xl">
             {isArabic ? "العدالة وخدمات التوثيق القانوني في الإمارات" : "JUSTICE AND LEGAL DOCUMENTATION SERVICES IN THE UAE"}

@@ -40,10 +40,10 @@ export default function BlogDetailsPage() {
   const content = lang === 'ar' ? blog?.contentAr || blog?.content || '' : blog?.content || '';
 
   return (
-    <main className="min-h-screen bg-white pt-24" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
+    <main className="min-h-screen bg-white" dir={lang === 'ar' ? 'rtl' : 'ltr'}>
 
       {/* ── Full-width Hero ── */}
-      <div className="relative w-full h-[35vh] md:h-[45vh] overflow-hidden bg-[#160A0A]">
+      <div className="relative w-full min-h-[42vh] sm:min-h-[48vh] md:min-h-[56vh] lg:min-h-[62vh] overflow-hidden bg-[#160A0A]">
         {bannerImage && (
           <img
             src={bannerImage}
@@ -55,13 +55,13 @@ export default function BlogDetailsPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-[#160A0A] via-[#160A0A]/40 to-transparent" />
 
         {/* Navbar spacer + centered meta */}
-        <div className="absolute inset-0 flex flex-col items-center justify-end pb-12 md:pb-16 px-6 text-center">
+        <div className="absolute inset-0 flex flex-col items-center justify-center pt-24 sm:pt-28 md:pt-32 lg:pt-36 pb-12 md:pb-16 px-6 md:px-10 text-center">
           {blog && (
             <>
               <span className="inline-block text-[10px] tracking-[0.3em] uppercase font-bold text-[#DE3B34] mb-4">
                 Legal Blog &nbsp;·&nbsp; {blog.date}
               </span>
-              <h1 className="text-3xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight max-w-3xl">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-[1.1] max-w-4xl">
                 {title}
               </h1>
             </>

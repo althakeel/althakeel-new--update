@@ -20,6 +20,8 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const email = String(body?.email || '').trim().toLowerCase();
+    const username = String(body?.username || '').trim();
+    const password = String(body?.password || '').trim();
     const locale = String(body?.locale || 'en') === 'ar' ? 'ar' : 'en';
     const invitationType = String(body?.type || 'approved') === 'invite' ? 'invite' : 'approved';
 
@@ -73,6 +75,8 @@ export async function POST(request: Request) {
               <h2 style="margin: 0 0 12px;">تمت الموافقة على الوصول</h2>
               <p>مرحباً،</p>
               <p>تمت الموافقة على بريدك الإلكتروني للوصول إلى لوحة الإدارة.</p>
+              ${username ? `<p><strong>اسم المستخدم:</strong> ${username}</p>` : ''}
+              ${password ? `<p><strong>كلمة المرور:</strong> ${password}</p>` : ''}
               <p>
                 يمكنك تسجيل الدخول من هنا:
                 <a href="${loginUrl}" style="color: #DE3B34; font-weight: 700;">${loginUrl}</a>
@@ -85,6 +89,8 @@ export async function POST(request: Request) {
               <h2 style="margin: 0 0 12px;">Access Approved</h2>
               <p>Hello,</p>
               <p>Your email has been approved to access the admin panel.</p>
+              ${username ? `<p><strong>Username:</strong> ${username}</p>` : ''}
+              ${password ? `<p><strong>Password:</strong> ${password}</p>` : ''}
               <p>
                 You can log in here:
                 <a href="${loginUrl}" style="color: #DE3B34; font-weight: 700;">${loginUrl}</a>

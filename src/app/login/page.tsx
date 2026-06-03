@@ -12,11 +12,19 @@ import {
   User,
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { ensureDashboardAccessRequest, getPrimaryAdminEmail, normalizeEmail } from '@/lib/admin-access';
+import {
+  ensureDashboardAccessRequest,
+  getPrimaryAdminEmail,
+  normalizeEmail,
+  normalizeUsername,
+  resolveDashboardLoginEmail,
+} from '@/lib/admin-access';
+
+const SESSION_CHECK_TIMEOUT_MS = 8000;
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
+  const [loginIdentifier, setLoginIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [authActionInProgress, setAuthActionInProgress] = useState(false);
@@ -27,7 +35,7 @@ export default function LoginPage() {
   const t = {
     title: 'Admin / Editor Login',
     subtitle: 'Only the primary admin can open the dashboard immediately. Other users must be approved by admin first.',
-    email: 'Email Address',
+    email: 'Email or Username',
     password: 'Password',
     forgot: 'Access is managed by admin invitation.',
     login: 'Login',
@@ -44,6 +52,11 @@ export default function LoginPage() {
 
   useEffect(() => {
     let isCancelled = false;
+    const sessionFallbackTimer = setTimeout(() => {
+      if (!isCancelled) {
+        setCheckingSession(false);
+      }
+    }, SESSION_CHECK_TIMEOUT_MS);
 
     const handleExistingUser = async (user: User | null) => {
       if (isCancelled || authActionInProgress) return;
@@ -53,12 +66,8 @@ export default function LoginPage() {
         return;
       }
 
-      const access = await ensureDashboardAccessRequest(user.email);
-      if (access?.status === 'active') {
-        router.replace('/en/dashboard');
-      } else {
-        router.replace('/portal');
-      }
+      setCheckingSession(false);
+      router.replace('/en/dashboard');
     };
 
     const bootstrapSession = async () => {
@@ -81,6 +90,7 @@ export default function LoginPage() {
 
     return () => {
       isCancelled = true;
+      clearTimeout(sessionFallbackTimer);
       unsubscribe();
     };
   }, [authActionInProgress, router]);
@@ -95,18 +105,37 @@ export default function LoginPage() {
     );
   }
 
-  const validateInputs = () => {
-    const normalizedEmail = normalizeEmail(email);
-    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail);
-    if (!isEmail || !password.trim()) {
+  const resolveEmailForAuth = async (mode: 'login' | 'register') => {
+    const normalizedIdentifier = loginIdentifier.trim();
+    if (!normalizedIdentifier || !password.trim()) {
       setFeedback({ type: 'error', message: t.invalid });
       return null;
     }
-    return normalizedEmail;
+
+    const looksLikeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedIdentifier);
+    if (mode === 'register') {
+      if (!looksLikeEmail) {
+        setFeedback({ type: 'error', message: 'Use an email address to create an account.' });
+        return null;
+      }
+      return normalizeEmail(normalizedIdentifier);
+    }
+
+    if (looksLikeEmail) {
+      return normalizeEmail(normalizedIdentifier);
+    }
+
+    const resolvedEmail = await resolveDashboardLoginEmail(normalizedIdentifier);
+    if (!resolvedEmail) {
+      setFeedback({ type: 'error', message: 'Username not found. Please use your email or contact admin.' });
+      return null;
+    }
+
+    return resolvedEmail;
   };
 
   const runAuthAction = async (mode: 'login' | 'register') => {
-    const normalizedEmail = validateInputs();
+    const normalizedEmail = await resolveEmailForAuth(mode);
     if (!normalizedEmail) return;
 
     try {
@@ -120,7 +149,12 @@ export default function LoginPage() {
         await signInWithEmailAndPassword(auth, normalizedEmail, password);
       }
 
-      const access = await ensureDashboardAccessRequest(normalizedEmail);
+      const access = await ensureDashboardAccessRequest(
+        normalizedEmail,
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginIdentifier.trim())
+          ? undefined
+          : normalizeUsername(loginIdentifier)
+      );
 
       if (access?.status === 'active') {
         setFeedback({ type: 'success', message: 'Logged in successfully.' });
@@ -191,10 +225,10 @@ export default function LoginPage() {
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-200">{t.email}</label>
             <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="example@email.com"
+              type="text"
+              value={loginIdentifier}
+              onChange={(event) => setLoginIdentifier(event.target.value)}
+              placeholder="example@email.com or username"
               className="w-full rounded-xl border border-white/15 bg-slate-900/80 px-4 py-3 text-slate-100 outline-none transition-colors focus:border-amber-300"
             />
           </div>
