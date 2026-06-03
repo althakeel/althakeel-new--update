@@ -91,9 +91,15 @@ export default function Footer({ locale }: { locale: string }) {
                   <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/8 text-[#DE3B34] ring-1 ring-white/10">
                     {item.icon}
                   </span>
-                  <Link href={item.href} className="transition hover:text-[#DE3B34]">
-                    {item.label}
-                  </Link>
+                  {item.href.startsWith('tel:') || item.href.startsWith('mailto:') ? (
+                    <a href={item.href} className="transition hover:text-[#DE3B34]">
+                      {item.label}
+                    </a>
+                  ) : (
+                    <Link href={item.href} className="transition hover:text-[#DE3B34]">
+                      {item.label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>

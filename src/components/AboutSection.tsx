@@ -29,7 +29,7 @@ export default function AboutSection() {
           </div>
           <div className="flex flex-col gap-2">
             <a href="tel:+971504096028" className="inline-block bg-gray-900 text-white font-bold py-2 px-6 rounded-full text-sm hover:bg-gray-700 transition">Call Us</a>
-            <span className="inline-block bg-yellow-400 text-gray-900 font-semibold py-2 px-6 rounded-full text-sm">+971 504096028</span>
+            <a href="tel:+971504096028" className="inline-block bg-yellow-400 text-gray-900 font-semibold py-2 px-6 rounded-full text-sm">+971 504096028</a>
           </div>
         </div>
       </div>
