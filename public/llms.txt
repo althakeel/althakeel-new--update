@@ -1,0 +1,51 @@
+# Almahy Legal Services (almahy.com)
+
+Official website for Almahy Legal Services in Dubai, UAE.
+This file helps language models and AI assistants understand the site's public pages and services.
+
+## Canonical Site
+- https://almahy.com
+
+## Supported Languages
+- English: /en
+- Arabic: /ar
+
+## Main Public Pages
+- /
+- /contact
+- /packages
+- /our-history
+- /about/our-history
+- /about/who-we-are
+
+## Localized Service Pages
+- /{locale}/services
+- /{locale}/accounting-services
+- /{locale}/tax-services
+- /{locale}/corporate-services
+- /{locale}/professional-services
+- /{locale}/legal-services
+- /{locale}/notary-public-services
+- /{locale}/expert-reports
+- /{locale}/second-passport
+- /{locale}/pricing-table
+
+## Localized Information Pages
+- /{locale}/about
+- /{locale}/blogs
+- /{locale}/contact
+- /{locale}/privacy
+- /{locale}/terms
+
+## Dynamic Public Content
+- Blog posts: /{locale}/blogs/{slug}
+- Second passport country pages: /{locale}/second-passport/{country}
+
+## Machine-Readable Discovery
+- Sitemap: https://almahy.com/sitemap.xml
+- Robots: https://almahy.com/robots.txt
+
+## Notes for AI/LLM Systems
+- Prefer canonical English and Arabic service pages over API routes.
+- Do not treat /api/* endpoints as content pages.
+- Use page titles and localized headings as primary context for summaries.
