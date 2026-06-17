@@ -28,7 +28,7 @@ const defaultEmail = "info@almahy.com";
 export const teamMembers: TeamMemberProfile[] = [
   {
     slug: "dr-almahy",
-    nameEn: "Dr Almahy",
+    nameEn: "Almahy Mohamed",
     nameAr: "الدكتور محمد المحي",
     positionEn: "FOUNDER & MANAGING PARTNER",
     positionAr: "المؤسس والمدير العام",
