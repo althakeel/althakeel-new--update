@@ -21,6 +21,12 @@ type PackagePlan = {
   note: string;
 };
 
+type ColumnHeader = {
+  title: string;
+  price?: string;
+  contract?: string;
+};
+
 type PricingPackagesCarouselProps = {
   caseTypeLabel: string;
   colCollection: string;
@@ -30,6 +36,9 @@ type PricingPackagesCarouselProps = {
   packages: PackagePlan[];
   isArabic: boolean;
   maxWidthClassName?: string;
+  noteRowIndex?: number | false;
+  inclusionMode?: boolean;
+  packageColumns?: [ColumnHeader, ColumnHeader, ColumnHeader];
 };
 
 export default function PricingPackagesCarousel({
@@ -41,6 +50,9 @@ export default function PricingPackagesCarousel({
   packages,
   isArabic,
   maxWidthClassName,
+  noteRowIndex = 1,
+  inclusionMode = false,
+  packageColumns,
 }: PricingPackagesCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [stageHeight, setStageHeight] = useState(0);
@@ -210,9 +222,30 @@ export default function PricingPackagesCarousel({
     );
   };
 
+  const renderInclusionIcon = (included: boolean) => (
+    <span
+      className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-[#C79B1F] text-white"
+      aria-label={included ? (isArabic ? 'مشمول' : 'Included') : isArabic ? 'غير مشمول' : 'Not included'}
+    >
+      {included ? (
+        <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="m5 10.5 3 3 7-7" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 20 20" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l8 8M14 6l-8 8" />
+        </svg>
+      )}
+    </span>
+  );
+
   const renderPaymentValue = (value: string) => {
     const normalized = value.trim().toLowerCase();
     const isIncluded = normalized === 'included' || normalized === 'مشمول';
+
+    if (inclusionMode) {
+      return renderInclusionIcon(isIncluded);
+    }
 
     if (!isIncluded) {
       return value;
@@ -225,20 +258,38 @@ export default function PricingPackagesCarousel({
     );
   };
 
+  const getPaymentForRow = (index: number, paymentItems: PaymentItem[]) => {
+    if (noteRowIndex === false) {
+      return paymentItems[index] ?? { collection: '', finalPayment: '', advancePayment: '' };
+    }
+
+    if (index === noteRowIndex) {
+      return null;
+    }
+
+    const paymentIndex = index < noteRowIndex ? index : index - 1;
+    return paymentItems[paymentIndex] ?? { collection: '', finalPayment: '', advancePayment: '' };
+  };
+
+  const renderColumnHeader = (column: ColumnHeader) => (
+    <div className="flex h-full min-h-14 flex-col items-center justify-center px-1 py-2">
+      <div>{column.title}</div>
+      {column.price ? <div className="mt-1 text-[10px] font-bold normal-case tracking-normal text-white">{column.price}</div> : null}
+      {column.contract ? <div className="text-[9px] font-medium normal-case tracking-normal text-white/80">{column.contract}</div> : null}
+    </div>
+  );
+
+  const resolvedColumns: [ColumnHeader, ColumnHeader, ColumnHeader] = packageColumns ?? [
+    { title: colCollection },
+    { title: colFinal },
+    { title: colAdvance },
+  ];
+
   const renderPackageCard = (pkg: PackagePlan, packageIndex: number) => {
     const tableRows = caseItems.map((item, index) => ({
       item,
       index,
-      payment:
-        (index === 0
-          ? pkg.paymentItems[0]
-          : index >= 2
-            ? pkg.paymentItems[index - 1]
-            : { collection: '', finalPayment: '', advancePayment: '' }) ?? {
-          collection: '',
-          finalPayment: '',
-          advancePayment: '',
-        },
+      payment: getPaymentForRow(index, pkg.paymentItems),
     }));
 
     return (
@@ -261,9 +312,9 @@ export default function PricingPackagesCarousel({
             {caseTypeLabel}
           </div>
           <div className="grid grid-cols-3 border-l border-white/40 text-center text-[11px] font-bold uppercase tracking-[0.08em] text-white/95">
-            <div className="flex h-full min-h-14 items-center justify-center border-r border-white/45 px-1">{colCollection}</div>
-            <div className="flex h-full min-h-14 items-center justify-center border-r border-white/45 px-1">{colFinal}</div>
-            <div className="flex h-full min-h-14 items-center justify-center px-1">{colAdvance}</div>
+            <div className="border-r border-white/45">{renderColumnHeader(resolvedColumns[0])}</div>
+            <div className="border-r border-white/45">{renderColumnHeader(resolvedColumns[1])}</div>
+            <div>{renderColumnHeader(resolvedColumns[2])}</div>
           </div>
 
           {tableRows.map(({ item, index, payment }) => (
@@ -275,34 +326,38 @@ export default function PricingPackagesCarousel({
               >
                 <div className="flex items-start justify-between gap-3">
                   <h3 className="text-[17px] font-bold leading-6">{item.title}:</h3>
-                  <button
-                    type="button"
-                    onClick={(event) => handleWhatsAppEnquiry(event, item.title, item.description, pkg.rightTitle)}
-                    onPointerDown={(event) => event.stopPropagation()}
-                    aria-label={isArabic ? `استفسار واتساب عن ${item.title}` : `WhatsApp enquiry about ${item.title}`}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded px-0 py-0 text-[11px] font-semibold tracking-[0.02em] text-white/85 transition hover:text-white md:opacity-0 md:group-hover/case:opacity-100"
-                  >
-                    <span>{isArabic ? 'اطلب استشارة' : 'Request Consultation'}</span>
-                    <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 3.5 10 8l-5 4.5" />
-                    </svg>
-                  </button>
+                  {!inclusionMode ? (
+                    <button
+                      type="button"
+                      onClick={(event) => handleWhatsAppEnquiry(event, item.title, item.description, pkg.rightTitle)}
+                      onPointerDown={(event) => event.stopPropagation()}
+                      aria-label={isArabic ? `استفسار واتساب عن ${item.title}` : `WhatsApp enquiry about ${item.title}`}
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded px-0 py-0 text-[11px] font-semibold tracking-[0.02em] text-white/85 transition hover:text-white md:opacity-0 md:group-hover/case:opacity-100"
+                    >
+                      <span>{isArabic ? 'اطلب استشارة' : 'Request Consultation'}</span>
+                      <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 3.5 10 8l-5 4.5" />
+                      </svg>
+                    </button>
+                  ) : null}
                 </div>
-                <div className="md:max-h-0 md:overflow-hidden md:opacity-0 md:transition-all md:duration-300 md:group-hover/case:mt-1 md:group-hover/case:max-h-[40rem] md:group-hover/case:opacity-100">
-                  {renderDescription(item.description)}
-                </div>
+                {!inclusionMode ? (
+                  <div className="md:max-h-0 md:overflow-hidden md:opacity-0 md:transition-all md:duration-300 md:group-hover/case:mt-1 md:group-hover/case:max-h-[40rem] md:group-hover/case:opacity-100">
+                    {renderDescription(item.description)}
+                  </div>
+                ) : null}
               </div>
-              {index === 1 ? (
+              {noteRowIndex !== false && index === noteRowIndex ? (
                 <div className="flex min-h-16 items-center justify-center border-l border-white/40 border-t border-white/40 bg-white/[0.04] px-4 py-3 text-center text-[11px] font-semibold leading-5 text-white/95">
                   {pkg.note}
                 </div>
-              ) : (
+              ) : payment ? (
                 <div className="grid grid-cols-3 border-l border-white/40 border-t border-white/35 text-center text-[12px] font-semibold text-white/95 even:bg-white/[0.03]">
                   <div className="flex min-h-12 items-center justify-center border-r border-white/40 px-2 py-2">{renderPaymentValue(payment.collection)}</div>
                   <div className="flex min-h-12 items-center justify-center border-r border-white/40 px-2 py-2">{renderPaymentValue(payment.finalPayment)}</div>
                   <div className="flex min-h-12 items-center justify-center px-2 py-2">{renderPaymentValue(payment.advancePayment)}</div>
                 </div>
-              )}
+              ) : null}
             </div>
           ))}
         </div>
@@ -311,6 +366,14 @@ export default function PricingPackagesCarousel({
   };
 
   const resolvedMaxWidthClassName = maxWidthClassName || 'max-w-[1160px]';
+
+  if (packages.length === 1) {
+    return (
+      <div className={`mx-auto ${resolvedMaxWidthClassName}`}>
+        {renderPackageCard(packages[0], 0)}
+      </div>
+    );
+  }
 
   return (
     <div className={`mx-auto ${resolvedMaxWidthClassName} space-y-5`}>

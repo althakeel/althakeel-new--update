@@ -26,13 +26,13 @@ export default function Home() {
   const heroHeadlines =
     lang === "ar"
       ? [
-          ["النصيحة القانونية", "مكالمة هاتفية عند الحاجة", "دائمًا في خدمتك."],
+          ["حماية حقوقكم", "بدعم قانوني", "عملي وفعّال."],
           ["عدالتك، مهمتنا", "إرشاد قانوني خبير", "في كل خطوة."],
           ["شركة محاماة موثوقة", "38 عامًا من التميز", "في الخدمات القانونية."],
           ["نتائج تهمك", "مكرسون لقضيتك", "بكل نزاهة."],
         ]
       : [
-          ["The Legal Advice", "Need Phone Call", "Away."],
+          ["Protecting Your Rights", "With Practical Legal", "Support."],
           ["Your Justice, Our Mission", "Expert Legal Guidance", "Every Step."],
           ["Trusted Law Firm", "38 Years of Excellence", "In Legal Services."],
           ["Results That Matter", "Dedicated to Your Case", "With Integrity."],

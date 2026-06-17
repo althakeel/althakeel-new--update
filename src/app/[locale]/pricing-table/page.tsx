@@ -21,6 +21,36 @@ type PackagePlan = {
   note: string;
 };
 
+function inclusionPayment(
+  virtual: boolean,
+  shared: boolean,
+  privateOffice: boolean,
+  includedLabel: string,
+): PaymentItem {
+  return {
+    collection: virtual ? includedLabel : "",
+    finalPayment: shared ? includedLabel : "",
+    advancePayment: privateOffice ? includedLabel : "",
+  };
+}
+
+const officeInclusionFlags = {
+  virtual: [true, true, true, true, true, true, true, false, false, false, false, false, false, false, false, false, false, false, false],
+  shared: [true, true, true, true, true, true, true, true, true, true, true, false, false, false, false, false, false, false, false],
+  private: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
+} as const;
+
+function buildComparisonPaymentItems(includedLabel: string): PaymentItem[] {
+  return officeInclusionFlags.virtual.map((_, index) =>
+    inclusionPayment(
+      officeInclusionFlags.virtual[index],
+      officeInclusionFlags.shared[index],
+      officeInclusionFlags.private[index],
+      includedLabel,
+    ),
+  );
+}
+
 type PricingContent = {
   heading: string;
   leftTitle: string;
@@ -37,6 +67,18 @@ type PricingContent = {
   accountingColAdvance: string;
   accountingCaseItems: CaseItem[];
   accountingPackages: PackagePlan[];
+  corporateHeading: string;
+  corporateCaseTypeLabel: string;
+  corporateColCollection: string;
+  corporateColFinal: string;
+  corporateColAdvance: string;
+  corporateCaseItems: CaseItem[];
+  corporatePackages: PackagePlan[];
+  corporatePackageColumns: [
+    { title: string; price: string; contract: string },
+    { title: string; price: string; contract: string },
+    { title: string; price: string; contract: string },
+  ];
 };
 
 const content: Record<Locale, PricingContent> = {
@@ -270,6 +312,46 @@ const content: Record<Locale, PricingContent> = {
         note: "Regular employee 6 days per week. Temporary employee up to 3 days per week as per client requirements.",
       },
     ],
+    corporateHeading: "Corporate Package",
+    corporateCaseTypeLabel: "Inclusions",
+    corporateColCollection: "Virtual Office",
+    corporateColFinal: "Shared Office",
+    corporateColAdvance: "Private Office",
+    corporateCaseItems: [
+      { title: "Reception services", description: "Professional front-desk and visitor handling for your business address." },
+      { title: "Telephone line", description: "Dedicated business line with call handling support." },
+      { title: "High-speed internet", description: "Reliable connectivity for daily business operations." },
+      { title: "Pantry/Kitchen use", description: "Access to shared pantry and kitchen facilities." },
+      { title: "Cleaning services", description: "Regular cleaning and maintenance of office spaces." },
+      { title: "Meeting room access", description: "Bookable meeting rooms for client and team sessions." },
+      { title: "Ejari registration", description: "Tenancy registration support for licensing and visa processes." },
+      { title: "Labor services", description: "Labor-related documentation and compliance support." },
+      { title: "License registration", description: "Trade license registration and renewal assistance." },
+      { title: "Immigration services", description: "Visa, residency, and immigration processing support." },
+      { title: "Tax filing", description: "Corporate tax filing and compliance submissions." },
+      { title: "Accounting", description: "Monthly bookkeeping and financial reporting." },
+      { title: "Tax consultancy", description: "Strategic tax planning and advisory services." },
+      { title: "VAT registration", description: "VAT registration and ongoing compliance support." },
+      { title: "Collection services", description: "Debt collection and receivables management." },
+      { title: "Trademark registration", description: "Brand and trademark protection registration." },
+      { title: "Notary services", description: "Document notarization and attestation support." },
+      { title: "Bank account opening", description: "Corporate bank account opening assistance." },
+      { title: "Memorandum of understanding", description: "Drafting and review of MOU agreements." },
+    ],
+    corporatePackages: [
+      {
+        rightTitle: "PACKAGES",
+        rightSubtitle: "VIRTUAL • SHARED • PRIVATE OFFICE • 1-YR CONTRACT",
+        headerGradient: "linear-gradient(120deg,#A87900 0%,#C79B1F 35%,#E2C263 62%,#C4910F 100%)",
+        paymentItems: buildComparisonPaymentItems("Included"),
+        note: "",
+      },
+    ],
+    corporatePackageColumns: [
+      { title: "Virtual Office", price: "AED 4,000 Monthly", contract: "1-Yr Contract" },
+      { title: "Shared Office", price: "AED 6,000 Monthly", contract: "1-Yr Contract" },
+      { title: "Private Office", price: "AED 10,000 Monthly", contract: "1-Yr Contract" },
+    ],
   },
   ar: {
     heading: "الباقات القانونية",
@@ -499,6 +581,46 @@ const content: Record<Locale, PricingContent> = {
         note: "موظف منتظم 6 أيام أسبوعياً. موظف مؤقت حتى 3 أيام أسبوعياً حسب متطلبات العميل.",
       },
     ],
+    corporateHeading: "باقة الشركات",
+    corporateCaseTypeLabel: "المحتويات",
+    corporateColCollection: "المكتب الافتراضي",
+    corporateColFinal: "المكتب المشترك",
+    corporateColAdvance: "المكتب الخاص",
+    corporateCaseItems: [
+      { title: "خدمات الاستقبال", description: "استقبال احترافي للزوار وإدارة المكالمات في عنوان عملك." },
+      { title: "خط الهاتف", description: "خط أعمال مخصص مع دعم استقبال المكالمات." },
+      { title: "إنترنت عالي السرعة", description: "اتصال موثوق للعمليات اليومية." },
+      { title: "استخدام المطبخ/البوفيه", description: "الوصول إلى مطبخ وبوفيه مشترك." },
+      { title: "خدمات التنظيف", description: "تنظيف وصيانة دورية للمكاتب." },
+      { title: "غرفة الاجتماعات", description: "غرف اجتماعات قابلة للحجز للعملاء والفرق." },
+      { title: "تسجيل إيجاري", description: "دعم تسجيل عقد الإيجار للتراخيص والتأشيرات." },
+      { title: "خدمات العمالة", description: "دعم مستندات العمالة والامتثال." },
+      { title: "تسجيل الرخصة", description: "تسجيل وتجديد الرخصة التجارية." },
+      { title: "خدمات الهجرة", description: "دعم التأشيرات والإقامة والهجرة." },
+      { title: "تقديم الإقرارات الضريبية", description: "تقديم إقرارات ضريبة الشركات والامتثال." },
+      { title: "المحاسبة", description: "مسك الدفاتر والتقارير المالية الشهرية." },
+      { title: "استشارات ضريبية", description: "تخطيط ضريبي استراتيجي وخدمات استشارية." },
+      { title: "تسجيل ضريبة القيمة المضافة", description: "تسجيل VAT والامتثال المستمر." },
+      { title: "خدمات التحصيل", description: "تحصيل الديون وإدارة المستحقات." },
+      { title: "تسجيل العلامات التجارية", description: "تسجيل وحماية العلامة التجارية." },
+      { title: "خدمات التوثيق", description: "توثيق المستندات واعتمادها." },
+      { title: "فتح حسابات بنكية", description: "مساعدة في فتح الحسابات البنكية للشركات." },
+      { title: "مذكرة تفاهم", description: "صياغة ومراجعة مذكرات التفاهم." },
+    ],
+    corporatePackages: [
+      {
+        rightTitle: "الباقات",
+        rightSubtitle: "مكتب افتراضي • مشترك • خاص • عقد لمدة سنة",
+        headerGradient: "linear-gradient(120deg,#A87900 0%,#C79B1F 35%,#E2C263 62%,#C4910F 100%)",
+        paymentItems: buildComparisonPaymentItems("مشمول"),
+        note: "",
+      },
+    ],
+    corporatePackageColumns: [
+      { title: "المكتب الافتراضي", price: "4,000 درهم شهرياً", contract: "عقد لمدة سنة" },
+      { title: "المكتب المشترك", price: "6,000 درهم شهرياً", contract: "عقد لمدة سنة" },
+      { title: "المكتب الخاص", price: "10,000 درهم شهرياً", contract: "عقد لمدة سنة" },
+    ],
   },
 };
 
@@ -577,6 +699,32 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
             packages={page.accountingPackages}
             isArabic={lang === "ar"}
             maxWidthClassName="max-w-[920px]"
+          />
+        </div>
+
+        <div className="my-12 flex items-center gap-6 md:my-16 md:gap-8">
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-amber-300/30 to-amber-300/10" />
+          <span className="text-xl text-amber-300 md:text-2xl">✦</span>
+          <div className="h-px flex-1 bg-gradient-to-l from-transparent via-amber-300/30 to-amber-300/10" />
+        </div>
+
+        <div className="mt-16">
+          <h2 className="text-center text-xl font-black tracking-[0.03em] text-[#FFD237] md:text-3xl">
+            {page.corporateHeading}
+          </h2>
+          <div className="mx-auto mb-8 mt-4 h-1 w-16 rounded-full bg-[#FFD237]" />
+
+          <PricingPackagesCarousel
+            caseTypeLabel={page.corporateCaseTypeLabel}
+            colCollection={page.corporateColCollection}
+            colFinal={page.corporateColFinal}
+            colAdvance={page.corporateColAdvance}
+            caseItems={page.corporateCaseItems}
+            packages={page.corporatePackages}
+            isArabic={lang === "ar"}
+            noteRowIndex={false}
+            inclusionMode
+            packageColumns={page.corporatePackageColumns}
           />
         </div>
 

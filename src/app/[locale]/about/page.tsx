@@ -1,4 +1,5 @@
 import { translations, Locale } from "@/lib/translations";
+import { teamMembers } from "@/lib/teamMembers";
 import Link from "next/link";
 
 export default async function AboutPage({
@@ -10,58 +11,6 @@ export default async function AboutPage({
   const isValidLoc = locale === "en" || locale === "ar";
   const lang = isValidLoc ? (locale as Locale) : "en";
   const t = translations[lang];
-  const teamMembers = [
-    {
-      name: "Dr Almahy",
-      position: lang === "en" ? "Founder" : "المؤسس",
-      photo: "/assets/employs/Dr%20Almahy.webp",
-    },
-    {
-      name: "Abdelrahman Mattar",
-      position: lang === "en" ? "Legal Team" : "الفريق القانوني",
-      photo: "/assets/employs/Abdelrahman%20mattar%20copy.webp",
-    },
-    {
-      name: "Ahmad Shokry",
-      position: lang === "en" ? "Legal Team" : "الفريق القانوني",
-      photo: "/assets/employs/Ahmad%20Shokry%20copy.webp",
-    },
-    {
-      name: "Dalia Ghonem",
-      position: lang === "en" ? "Legal Team" : "الفريق القانوني",
-      photo: "/assets/employs/Dalia%20Ghonem%20copy.webp",
-    },
-    {
-      name: "Maged Nafea",
-      position: lang === "en" ? "Legal Team" : "الفريق القانوني",
-      photo: "/assets/employs/Fadeel%20copy.webp",
-    },
-    {
-      name: "Kaan",
-      position: lang === "en" ? "Legal Team" : "الفريق القانوني",
-      photo: "/assets/employs/Kaan%20copy.webp",
-    },
-    {
-      name: "Mahmoud Abdel Fadeel",
-      position: lang === "en" ? "Legal Team" : "الفريق القانوني",
-      photo: "/assets/employs/Mahmoud%20Abdel%20fadeel%20copy.webp",
-    },
-    {
-      name: "Mohamed Elmaghraby",
-      position: lang === "en" ? "Legal Team" : "الفريق القانوني",
-      photo: "/assets/employs/Mohamed%20Elmaghraby%20copy.webp",
-    },
-    {
-      name: "Mohamed Hassanein",
-      position: lang === "en" ? "Legal Team" : "الفريق القانوني",
-      photo: "/assets/employs/Mohamed%20Hassanein%20copy.webp",
-    },
-    {
-      name: "Nasef Abdelaal",
-      position: lang === "en" ? "Legal Team" : "الفريق القانوني",
-      photo: "/assets/employs/Nasef%20Abdelaal%20copy.webp",
-    },
-  ];
 
   return (
     <div className="min-h-screen">
@@ -70,7 +19,7 @@ export default async function AboutPage({
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1497366216548-37526070297c?w=1600')] bg-cover bg-center opacity-20"></div>
         <div className="relative z-10 text-center px-4">
           <p className="font-semibold mb-2 tracking-wider uppercase text-sm" style={{color: '#DE3B34'}}>
-            {lang === 'en' ? 'We Define The Success' : 'نحدد النجاح'}
+            {lang === 'en' ? 'Driven by Precision, Built on Trust' : 'مدفوعون بالدقة، مبنيون على الثقة'}
           </p>
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
             {lang === 'en' ? 'About us' : 'من نحن'}
@@ -274,24 +223,27 @@ export default async function AboutPage({
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {teamMembers.map((member, idx) => (
-              <div
-                key={idx}
-                className="group relative h-[380px] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_12px_24px_-18px_rgba(15,23,42,0.45)] hover:-translate-y-1 hover:shadow-[0_18px_32px_-18px_rgba(15,23,42,0.45)] transition-all duration-300"
+            {teamMembers.map((member) => (
+              <Link
+                key={member.slug}
+                href={`/${lang}/about/team/${member.slug}`}
+                className="group relative block h-[380px] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-[0_12px_24px_-18px_rgba(15,23,42,0.45)] hover:-translate-y-1 hover:shadow-[0_18px_32px_-18px_rgba(15,23,42,0.45)] transition-all duration-300"
               >
                 <img
                   src={member.photo}
-                  alt={member.name}
+                  alt={lang === "ar" ? member.nameAr : member.nameEn}
                   className="h-full w-full object-cover object-top group-hover:scale-[1.03] transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-gray-900/70 via-gray-900/10 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 border-t border-white/15 bg-black/35 backdrop-blur-sm px-4 py-3 text-center">
-                  <h4 className="text-white text-[28px] font-bold leading-[1.12] tracking-[-0.015em]">
-                    {member.name}
+                  <h4 className={`text-white text-[28px] font-bold leading-[1.12] tracking-[-0.015em] ${lang === "en" ? "uppercase" : ""}`}>
+                    {lang === "ar" ? member.nameAr : member.nameEn}
                   </h4>
-                  <p className="mt-1 text-xs uppercase tracking-[0.12em] font-medium text-white/80">{member.position}</p>
+                  <p className={`mt-1 text-xs uppercase tracking-[0.12em] font-medium text-white/80 ${lang === "ar" ? "normal-case" : ""}`}>
+                    {lang === "ar" ? member.positionAr : member.positionEn}
+                  </p>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
