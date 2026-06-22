@@ -17,6 +17,16 @@ export type TeamMemberProfile = {
   highlightsAr: string[];
   overviewEn: string[];
   overviewAr: string[];
+  credentialsEn?: {
+    institution: string;
+    certificate: string;
+    date?: string;
+  }[];
+  credentialsAr?: {
+    institution: string;
+    certificate: string;
+    date?: string;
+  }[];
   phone: string;
   email: string;
   linkedin?: string;
@@ -33,14 +43,14 @@ export const teamMembers: TeamMemberProfile[] = [
     positionEn: "FOUNDER & MANAGING PARTNER",
     positionAr: "المؤسس والمدير العام",
     photo: "/assets/employs/Dr%20Almahy.webp",
-    casesHandledDisplayEn: "150+",
-    casesHandledDisplayAr: "+150",
+    casesHandledDisplayEn: "900+",
+    casesHandledDisplayAr: "+900",
     casesInProgressEn: "Multiple corporate, civil, and arbitration files remain active.",
     casesInProgressAr: "توجد ملفات مؤسسية ومدنية وتحكيمية متعددة لا تزال قيد المتابعة.",
     casesDetailEn:
-      "Dr. Mohamed Al Mahy has led more than 150 mandates across civil litigation, commercial disputes, corporate advisory, and arbitration. His caseload includes company formation disputes, board governance matters, banking claims, labor conflicts, and complex enforcement files across UAE courts and authorities.",
+      "Almahy Mohamed has led 900+ mandates across civil litigation, commercial disputes, corporate advisory, and arbitration. His caseload includes company formation disputes, board governance matters, banking claims, labor conflicts, and complex enforcement files across UAE courts and authorities.",
     casesDetailAr:
-      "قاد الدكتور محمد المحي أكثر من 150 ملفاً في التقاضي المدني والنزاعات التجارية والاستشارات المؤسسية والتحكيم، وتشمل قضاياه نزاعات تأسيس الشركات وحوكمة مجالس الإدارة ومطالبات مصرفية ونزاعات عمل وملفات تنفيذ معقدة أمام محاكم وجهات الإمارات.",
+      "قاد الدكتور محمد المحي أكثر من 900 ملف في التقاضي المدني والنزاعات التجارية والاستشارات المؤسسية والتحكيم، وتشمل قضاياه نزاعات تأسيس الشركات وحوكمة مجالس الإدارة ومطالبات مصرفية ونزاعات عمل وملفات تنفيذ معقدة أمام محاكم وجهات الإمارات.",
     practiceAreasEn: ["Corporate Law", "Civil Litigation", "Arbitration", "Business Setup", "Banking Disputes"],
     practiceAreasAr: ["قانون الشركات", "التقاضي المدني", "التحكيم", "تأسيس الأعمال", "النزاعات المصرفية"],
     highlightsEn: [
@@ -54,14 +64,54 @@ export const teamMembers: TeamMemberProfile[] = [
       "يتولى التحكيم والإجراءات القضائية من الإيداع حتى تنفيذ الأحكام.",
     ],
     overviewEn: [
-      "Founder and Managing Partner of Almahy Legal Services, guiding the firm's strategy across litigation, corporate services, and client representation in Dubai and the wider UAE.",
-      "Known for combining legal precision with practical business understanding, especially in matters involving shareholders, contracts, and authority procedures.",
+      "Almahy Mohamed's professional profile is supported by formal legal education and specialized training in private law, arbitration, translation studies, and continuing legal education.",
+      "His academic and professional development includes programs from Egyptian, American, and international legal institutions, with a focus on arbitration practice, private law, legal skills, and professional standards.",
     ],
     overviewAr: [
-      "المؤسس والمدير العام لشركة المحامي للخدمات القانونية، ويقود استراتيجية المكتب في التقاضي وخدمات الشركات وتمثيل العملاء في دبي وعموم الإمارات.",
-      "معروف بدمج الدقة القانونية مع الفهم العملي للأعمال، خاصة في مسائل الشركاء والعقود وإجراءات الجهات الرسمية.",
+      "تستند الخبرة المهنية للأستاذ المحي محمد إلى تعليم قانوني رسمي وتدريب متخصص في القانون الخاص والتحكيم ودراسات الترجمة والتعليم القانوني المستمر.",
+      "تشمل مسيرته الأكاديمية والمهنية برامج من مؤسسات قانونية مصرية وأمريكية ودولية، مع تركيز على ممارسات التحكيم والقانون الخاص والمهارات القانونية والمعايير المهنية.",
     ],
-    phone: defaultPhone,
+    credentialsEn: [
+      {
+        institution: "The Arabian European Center for Arbitration and Training",
+        certificate: "Certification: Egyptian Arbitration Law in Light of International Laws",
+        date: "December 14, 2009 - January 18, 2010",
+      },
+      {
+        institution: "The American University in Cairo, School of Continuing Education",
+        certificate: "Foundation Certificate: Arabic and Translation Studies Division",
+      },
+      {
+        institution: "Ain Shams University",
+        certificate: "Diploma of Higher Studies in Private Law",
+      },
+      {
+        institution: "American Bar Association Rule of Law Initiative and Cairo University",
+        certificate: "Continuing Legal Education for Young Lawyers: Skills, Practice and Professional Course",
+        date: "January 18 - March 14, 2010, Cairo, Egypt",
+      },
+    ],
+    credentialsAr: [
+      {
+        institution: "المركز العربي الأوروبي للتحكيم والتدريب",
+        certificate: "شهادة: قانون التحكيم المصري في ضوء القوانين الدولية",
+        date: "14 ديسمبر 2009 - 18 يناير 2010",
+      },
+      {
+        institution: "الجامعة الأمريكية بالقاهرة، كلية التعليم المستمر",
+        certificate: "شهادة تأسيسية: قسم الدراسات العربية والترجمة",
+      },
+      {
+        institution: "جامعة عين شمس",
+        certificate: "دبلوم الدراسات العليا في القانون الخاص",
+      },
+      {
+        institution: "مبادرة سيادة القانون التابعة لنقابة المحامين الأمريكية وجامعة القاهرة",
+        certificate: "التعليم القانوني المستمر للمحامين الشباب: المهارات والممارسة والدورة المهنية",
+        date: "18 يناير - 14 مارس 2010، القاهرة، مصر",
+      },
+    ],
+    phone: " +971 566674666",
     email: defaultEmail,
     linkedin: "https://www.linkedin.com/in/almahy-mohamed-a9a82565",
   },
@@ -72,30 +122,34 @@ export const teamMembers: TeamMemberProfile[] = [
     positionEn: "LEGAL CONSULTANT",
     positionAr: "مستشار قانوني",
     photo: "/assets/employs/Abdelrahman%20mattar%20copy.webp",
-    casesHandledDisplayEn: "28+",
-    casesHandledDisplayAr: "+28",
-    casesInProgressEn: "12 active files across contracts, civil claims, and advisory work.",
-    casesInProgressAr: "12 ملفاً نشطاً في العقود والمطالبات المدنية والاستشارات.",
+    casesHandledDisplayEn: "200+",
+    casesHandledDisplayAr: "+200",
+    casesInProgressEn: "Active criminal and complaint files remain in process across court, police, and authority stages.",
+    casesInProgressAr: "لا تزال ملفات جنائية وشكاوى نشطة قيد الإجراء أمام المحاكم والشرطة والجهات المختصة.",
     casesDetailEn:
-      "Abdelrahman Mattar has handled more than 28 cases involving contract disputes, civil claims, document review, and pre-litigation advisory. He supports clients from initial legal assessment through drafting, negotiation, and court preparation.",
+      "Abdelrahman Mattar has handled more than 200 cases during 7 months of intensive legal practice. His caseload includes breach of trust, cybercrimes, extortion, forgery, theft, assault, drug-related cases, malicious complaints, and issuing cheques in bad faith.",
     casesDetailAr:
-      "تولى عبد الرحمن مطر أكثر من 28 قضية في نزاعات العقود والمطالبات المدنية ومراجعة المستندات والاستشارات قبل التقاضي، ويدعم العملاء من التقييم القانوني الأولي حتى الصياغة والتفاوض والإعداد للمحكمة.",
-    practiceAreasEn: ["Contract Law", "Civil Disputes", "Legal Drafting", "Commercial Advisory"],
-    practiceAreasAr: ["قانون العقود", "النزاعات المدنية", "الصياغة القانونية", "الاستشارات التجارية"],
+      "تولى عبد الرحمن مطر أكثر من 200 قضية خلال 7 أشهر من العمل القانوني المكثف، وتشمل ملفاته خيانة الأمانة والجرائم الإلكترونية والابتزاز والتزوير والسرقة والاعتداء والقضايا المتعلقة بالمخدرات والشكاوى الكيدية وإصدار الشيكات بسوء نية.",
+    practiceAreasEn: ["Breach of Trust", "Cybercrimes", "Extortion", "Forgery", "Theft", "Assault", "Drug-Related Cases", "Malicious Complaints", "Bad-Faith Cheques"],
+    practiceAreasAr: ["خيانة الأمانة", "الجرائم الإلكترونية", "الابتزاز", "التزوير", "السرقة", "الاعتداء", "قضايا المخدرات", "الشكاوى الكيدية", "الشيكات بسوء نية"],
     highlightsEn: [
-      "Reviews and drafts agreements, notices, and legal correspondence.",
-      "Prepares case files for civil and commercial court proceedings.",
-      "Advises clients on dispute strategy before escalation to litigation.",
+      "Handles criminal complaint files from initial review through police, prosecution, and court follow-up.",
+      "Supports cases involving breach of trust, forgery, theft, assault, and drug-related allegations.",
+      "Works on cybercrime, extortion, malicious complaint, and bad-faith cheque matters.",
     ],
     highlightsAr: [
-      "يراجع ويصوغ الاتفاقيات والإشعارات والمراسلات القانونية.",
-      "يعد ملفات القضايا للإجراءات أمام المحاكم المدنية والتجارية.",
-      "يقدم استشارات حول استراتيجية النزاع قبل التصعيد إلى التقاضي.",
+      "يتولى ملفات الشكاوى الجنائية من المراجعة الأولية حتى المتابعة أمام الشرطة والنيابة والمحاكم.",
+      "يدعم القضايا المتعلقة بخيانة الأمانة والتزوير والسرقة والاعتداء والاتهامات المرتبطة بالمخدرات.",
+      "يعمل على ملفات الجرائم الإلكترونية والابتزاز والشكاوى الكيدية والشيكات الصادرة بسوء نية.",
     ],
     overviewEn: [
-      "Legal Consultant focused on turning complex contractual issues into clear, actionable legal steps for businesses and individuals.",
+      "Legal Consultant with 7 months of fast-paced practical experience handling a high volume of criminal and complaint-related matters.",
+      "He focuses on careful file review, evidence organization, procedural follow-up, and clear client updates at each stage of the case.",
     ],
-    overviewAr: ["مستشار قانوني يركز على تحويل القضايا التعاقدية المعقدة إلى خطوات قانونية واضحة وقابلة للتنفيذ للشركات والأفراد."],
+    overviewAr: [
+      "مستشار قانوني لديه 7 أشهر من الخبرة العملية المكثفة في التعامل مع عدد كبير من القضايا الجنائية والملفات المرتبطة بالشكاوى.",
+      "يركز على المراجعة الدقيقة للملفات وتنظيم الأدلة والمتابعة الإجرائية وتقديم تحديثات واضحة للعملاء في كل مرحلة من مراحل القضية.",
+    ],
     phone: defaultPhone,
     email: defaultEmail,
   },
@@ -143,30 +197,50 @@ export const teamMembers: TeamMemberProfile[] = [
     positionEn: "LEGAL CONSULTANT",
     positionAr: "مستشارة قانونية",
     photo: "/assets/employs/Dalia%20Ghonem%20copy.webp",
-    casesHandledDisplayEn: "22+",
-    casesHandledDisplayAr: "+22",
-    casesInProgressEn: "7 family and civil files remain under active follow-up.",
-    casesInProgressAr: "7 ملفات أسرية ومدنية لا تزال قيد المتابعة النشطة.",
+    casesHandledDisplayEn: "700+",
+    casesHandledDisplayAr: "+700",
+    casesInProgressEn: "She has completed 1 year with the firm and has achieved an 80% win rate across handled matters.",
+    casesInProgressAr: "أكملت سنة واحدة مع المكتب وحققت نسبة فوز 80% في الملفات التي تعاملت معها.",
     casesDetailEn:
-      "Dalia Ghonem has handled more than 22 cases in family law, civil disputes, and corporate documentation. She assists clients with sensitive personal matters, court filings, and the preparation of legal documents required by UAE authorities.",
+      "Dalia Ghonem has handled 700+ cases across labor, civil, commercial, criminal, personal, contract, and agreement-related matters. Her work includes reviewing claims and supporting documents, preparing case files, tracking procedural requirements, and coordinating client updates through each legal stage.",
     casesDetailAr:
-      "تولت داليا غنيم أكثر من 22 قضية في قانون الأسرة والنزاعات المدنية وتوثيق الشركات، وتساعد العملاء في المسائل الشخصية الحساسة وإيداع الدعاوى وإعداد المستندات القانونية المطلوبة من جهات الإمارات.",
-    practiceAreasEn: ["Family Law", "Civil Disputes", "Corporate Documentation", "Legal Drafting"],
-    practiceAreasAr: ["قانون الأسرة", "النزاعات المدنية", "توثيق الشركات", "الصياغة القانونية"],
+      "تولت داليا غنيم أكثر من 700 قضية في مجالات العمل والمدني والتجاري والجنائي والقضايا الشخصية والعقود والاتفاقيات، ويشمل عملها مراجعة المطالبات والمستندات الداعمة وإعداد ملفات القضايا ومتابعة المتطلبات الإجرائية وتنسيق تحديثات العملاء عبر كل مرحلة قانونية.",
+    practiceAreasEn: ["Labor Law", "Civil Cases", "Commercial Cases", "Criminal Cases", "Personal Matters", "Contracts", "Agreements"],
+    practiceAreasAr: ["قانون العمل", "القضايا المدنية", "القضايا التجارية", "القضايا الجنائية", "القضايا الشخصية", "العقود", "الاتفاقيات"],
     highlightsEn: [
-      "Prepares and reviews legal documents for court and authority use.",
-      "Supports clients in family and civil matters with structured case follow-up.",
-      "Maintains clear communication throughout each stage of the legal process.",
+      "Handles labor, civil, commercial, criminal, and personal case files with structured follow-up.",
+      "Reviews contracts, agreements, claims, and supporting documents before filing or response.",
+      "Tracks hearings, submissions, deadlines, and client updates across active matters.",
+      "Maintains an 80% win rate across handled cases.",
     ],
     highlightsAr: [
-      "تعد وتراجع المستندات القانونية للاستخدام القضائي والرسمي.",
-      "تدعم العملاء في المسائل الأسرية والمدنية بمتابعة منظمة للملف.",
-      "تحافظ على تواصل واضح خلال جميع مراحل الإجراءات القانونية.",
+      "تتولى ملفات العمل والمدني والتجاري والجنائي والقضايا الشخصية بمتابعة منظمة.",
+      "تراجع العقود والاتفاقيات والمطالبات والمستندات الداعمة قبل التقديم أو الرد.",
+      "تتابع الجلسات والمذكرات والمواعيد النهائية وتحديثات العملاء عبر الملفات النشطة.",
+      "تحافظ على نسبة فوز 80% في القضايا التي تعاملت معها.",
     ],
     overviewEn: [
-      "Legal Consultant known for careful documentation and client-focused handling of civil and family-related legal work.",
+      "Legal Consultant who has completed 1 year with Almahy Legal Services, handling a broad mix of labor, civil, commercial, criminal, personal, contract, and agreement-related matters.",
+      "Her profile is focused on disciplined case preparation, practical follow-up, and clear communication from initial review through the next legal step.",
     ],
-    overviewAr: ["مستشارة قانونية معروفة بالدقة في التوثيق والاهتمام بالعميل في الأعمال القانونية المدنية والأسرية."],
+    overviewAr: [
+      "مستشارة قانونية أكملت سنة واحدة مع شركة المحامي للخدمات القانونية، وتتعامل مع مجموعة واسعة من قضايا العمل والمدني والتجاري والجنائي والقضايا الشخصية والعقود والاتفاقيات.",
+      "يركز ملفها المهني على الإعداد المنظم للقضايا والمتابعة العملية والحفاظ على تواصل واضح من المراجعة الأولية حتى الخطوة القانونية التالية.",
+    ],
+    credentialsEn: [
+      {
+        institution: "Mansoura University",
+        certificate: "Faculty of Law",
+        date: "2017",
+      },
+    ],
+    credentialsAr: [
+      {
+        institution: "جامعة المنصورة",
+        certificate: "كلية القانون",
+        date: "2017",
+      },
+    ],
     phone: defaultPhone,
     email: defaultEmail,
   },
@@ -177,31 +251,49 @@ export const teamMembers: TeamMemberProfile[] = [
     positionEn: "LEGAL CONSULTANT",
     positionAr: "مستشار قانوني",
     photo: "/assets/employs/Fadeel%20copy.webp",
-    casesHandledDisplayEn: "30+",
-    casesHandledDisplayAr: "+30",
-    casesInProgressEn: "11 labor, rental, and commercial cases are still in process.",
-    casesInProgressAr: "11 قضية عمل وإيجار وتجارية لا تزال قيد الإجراء.",
+    casesHandledDisplayEn: "200+",
+    casesHandledDisplayAr: "+200",
+    casesInProgressEn: "He has completed 4 months with the firm and has achieved a 70% win rate across handled matters.",
+    casesInProgressAr: "أكمل 4 أشهر مع المكتب وحقق نسبة فوز 70% في الملفات التي تعامل معها.",
     casesDetailEn:
-      "Maged Nafea has handled more than 30 cases in labor disputes, rental claims, and commercial litigation. His files include employee termination disputes, unpaid dues, lease conflicts, and contract enforcement before UAE courts and committees.",
+      "Maged Nafea has handled 200+ cases across labor, civil, commercial, criminal, personal, contract, and agreement-related matters. His work includes preparing case files, reviewing claims and supporting documents, following procedural steps, and coordinating updates until each file reaches the next legal stage.",
     casesDetailAr:
-      "تولى مجد نافع أكثر من 30 قضية في نزاعات العمل ومطالبات الإيجار والتقاضي التجاري، وتشمل ملفاته نزاعات إنهاء الخدمة والمستحقات غير المدفوعة وتعارضات الإيجار وتنفيذ العقود أمام محاكم ولجان الإمارات.",
-    practiceAreasEn: ["Labor Law", "Rental Disputes", "Commercial Litigation", "Case Follow-up"],
-    practiceAreasAr: ["قانون العمل", "نزاعات الإيجار", "التقاضي التجاري", "متابعة القضايا"],
+      "تولى مجد نافع أكثر من 200 قضية في مجالات العمل والمدني والتجاري والجنائي والقضايا الشخصية والعقود والاتفاقيات، ويشمل عمله إعداد ملفات القضايا ومراجعة المطالبات والمستندات الداعمة ومتابعة الإجراءات وتنسيق التحديثات حتى انتقال كل ملف إلى مرحلته القانونية التالية.",
+    practiceAreasEn: ["Labor Law", "Civil Cases", "Commercial Cases", "Criminal Cases", "Personal Matters", "Contracts", "Agreements"],
+    practiceAreasAr: ["قانون العمل", "القضايا المدنية", "القضايا التجارية", "القضايا الجنائية", "القضايا الشخصية", "العقود", "الاتفاقيات"],
     highlightsEn: [
-      "Represents clients in labor cases from complaint through judgment stages.",
-      "Handles rental disputes before relevant commissions and courts.",
-      "Tracks commercial case progress through hearings, submissions, and updates.",
+      "Handles labor, civil, commercial, criminal, and personal case files with structured follow-up.",
+      "Reviews contracts, agreements, claims, and supporting documents before filing or response.",
+      "Tracks hearings, submissions, deadlines, and client updates across active matters.",
+      "Maintains a 70% win rate across handled cases.",
     ],
     highlightsAr: [
-      "يمثل العملاء في قضايا العمل من الشكوى حتى مراحل الحكم.",
-      "يتولى نزاعات الإيجار أمام اللجان والمحاكم المختصة.",
-      "يتابع تقدم القضايا التجارية عبر الجلسات والمذكرات والتحديثات.",
+      "يتولى ملفات العمل والمدني والتجاري والجنائي والقضايا الشخصية بمتابعة منظمة.",
+      "يراجع العقود والاتفاقيات والمطالبات والمستندات الداعمة قبل التقديم أو الرد.",
+      "يتابع الجلسات والمذكرات والمواعيد النهائية وتحديثات العملاء عبر الملفات النشطة.",
+      "يحافظ على نسبة فوز 70% في القضايا التي تعامل معها.",
     ],
     overviewEn: [
-      "Legal Consultant with practical experience in labor, rental, and commercial disputes, focused on achieving clear outcomes through disciplined case management.",
+      "Legal Consultant who has completed 4 months with Almahy Legal Services, handling a broad mix of labor, civil, commercial, criminal, personal, contract, and agreement-related matters.",
+      "His profile is focused on disciplined case preparation, practical follow-up, and maintaining clear communication from initial review through the next legal step.",
     ],
     overviewAr: [
-      "مستشار قانوني بخبرة عملية في نزاعات العمل والإيجار والتجارة، يركز على تحقيق نتائج واضحة من خلال إدارة منظمة للملفات.",
+      "مستشار قانوني أكمل 4 أشهر مع شركة المحامي للخدمات القانونية، ويتعامل مع مجموعة واسعة من قضايا العمل والمدني والتجاري والجنائي والقضايا الشخصية والعقود والاتفاقيات.",
+      "يركز ملفه المهني على الإعداد المنظم للقضايا والمتابعة العملية والحفاظ على تواصل واضح من المراجعة الأولية حتى الخطوة القانونية التالية.",
+    ],
+    credentialsEn: [
+      {
+        institution: "Alexandria University",
+        certificate: "Faculty of Law",
+        date: "2016",
+      },
+    ],
+    credentialsAr: [
+      {
+        institution: "جامعة الإسكندرية",
+        certificate: "كلية القانون",
+        date: "2016",
+      },
     ],
     phone: defaultPhone,
     email: defaultEmail,
@@ -213,21 +305,21 @@ export const teamMembers: TeamMemberProfile[] = [
     positionEn: "LEGAL ADVISOR",
     positionAr: "مستشار قانوني",
     photo: "/assets/employs/Kaan%20copy.webp",
-    casesHandledDisplayEn: "4",
-    casesHandledDisplayAr: "4",
-    casesInProgressEn: "Many of his cases are still in process across active court and authority stages.",
-    casesInProgressAr: "لا تزال العديد من قضاياه قيد الإجراء في مراحل المحاكم والجهات الرسمية.",
+    casesHandledDisplayEn: "4+",
+    casesHandledDisplayAr: "+4",
+    casesInProgressEn: "Several matters remain in process, which is why his completed case record currently reflects 4 handled cases.",
+    casesInProgressAr: "لا تزال عدة ملفات قيد الإجراء، ولذلك يعكس سجل القضايا المكتملة حالياً 4 قضايا تم التعامل معها.",
     casesDetailEn:
-      "Kaan Umulu has handled 4 cases directly to date. Several additional matters remain in process, including files awaiting hearings, authority responses, documentation, and enforcement steps. He is actively building his caseload across debt collection, criminal, real estate, and labor matters.",
+      "Kaan Umulu has handled 4 cases directly during his 7 months of legal practice with the firm. Many of his additional files are still in process, including matters awaiting hearings, authority responses, documentation, settlement follow-up, and enforcement steps. His work focuses on debt collection, criminal matters, real estate disputes, and labor law cases.",
     casesDetailAr:
-      "تولى كان أومولو 4 قضايا بشكل مباشر حتى الآن، فيما لا تزال عدة ملفات إضافية قيد الإجراء بما في ذلك قضايا تنتظر الجلسات وردود الجهات والمستندات وخطوات التنفيذ، ويبني حالياً محفظة قضايا في تحصيل الديون والجنائي والعقارات والعمل.",
+      "تولى كان أومولو 4 قضايا بشكل مباشر خلال 7 أشهر من العمل القانوني مع المكتب، فيما لا تزال العديد من ملفاته الإضافية قيد الإجراء، بما في ذلك ملفات تنتظر الجلسات وردود الجهات والمستندات ومتابعة التسوية وخطوات التنفيذ. يركز عمله على تحصيل الديون والقضايا الجنائية والنزاعات العقارية وقضايا العمل.",
     practiceAreasEn: ["Debt Collection", "Criminal Law", "Real Estate", "Labor Law"],
     practiceAreasAr: ["تحصيل الديون", "القانون الجنائي", "القانون العقاري", "قانون العمل"],
     highlightsEn: [
-      "Handles debt collection files from notice stage through enforcement follow-up.",
-      "Supports criminal and real estate matters with document preparation and case tracking.",
-      "Assists in labor disputes involving contracts, termination, and employee claims.",
-      "Maintains detailed follow-up on every active file until the next legal step is completed.",
+      "Handles debt collection files from demand notice and settlement follow-up through enforcement support.",
+      "Supports criminal matters with document organization, case tracking, and procedural follow-up.",
+      "Assists with real estate disputes involving tenancy, property documentation, and claim preparation.",
+      "Works on labor law matters involving employment contracts, termination issues, and employee claims.",
     ],
     highlightsAr: [
       "يتولى ملفات تحصيل الديون من مرحلة الإشعار حتى متابعة التنفيذ.",
@@ -236,12 +328,26 @@ export const teamMembers: TeamMemberProfile[] = [
       "يحافظ على متابعة تفصيلية لكل ملف نشط حتى اكتمال الخطوة القانونية التالية.",
     ],
     overviewEn: [
-      "Legal Advisor at Almahy Legal Services, focused on debt collection, criminal law, real estate disputes, and labor cases.",
-      "He deals closely with clients and authorities to move each file forward with clear documentation, timely submissions, and structured case updates.",
+      "Legal Advisor at Almahy Legal Services with 7 months of practical legal work across active client files and court-related follow-up.",
+      "He works closely with the team, clients, and relevant authorities to keep each matter organized through clear documentation, timely submissions, and structured case updates.",
     ],
     overviewAr: [
-      "مستشار قانوني في شركة المحامي للخدمات القانونية، يركز على تحصيل الديون والقانون الجنائي والنزاعات العقارية وقضايا العمل.",
-      "يتعامل عن كثب مع العملاء والجهات الرسمية لإنجاز كل ملف من خلال توثيق واضح وتقديمات في الوقت المناسب وتحديثات منظمة للقضية.",
+      "مستشار قانوني في شركة المحامي للخدمات القانونية ولديه 7 أشهر من العمل القانوني العملي عبر ملفات عملاء نشطة ومتابعة مرتبطة بالمحاكم.",
+      "يعمل عن قرب مع الفريق والعملاء والجهات المختصة للحفاظ على تنظيم كل ملف من خلال توثيق واضح وتقديمات في الوقت المناسب وتحديثات منظمة للقضية.",
+    ],
+    credentialsEn: [
+      {
+        institution: "Galatasaray University",
+        certificate: "Faculty of Law",
+        date: "2018",
+      },
+    ],
+    credentialsAr: [
+      {
+        institution: "جامعة غلطة سراي",
+        certificate: "كلية القانون",
+        date: "2018",
+      },
     ],
     phone: defaultPhone,
     email: defaultEmail,
@@ -254,30 +360,46 @@ export const teamMembers: TeamMemberProfile[] = [
     positionEn: "LEGAL CONSULTANT",
     positionAr: "مستشار قانوني",
     photo: "/assets/employs/Mahmoud%20Abdel%20fadeel%20copy.webp",
-    casesHandledDisplayEn: "32+",
-    casesHandledDisplayAr: "+32",
-    casesInProgressEn: "10 enforcement and civil files remain active.",
-    casesInProgressAr: "10 ملفات تنفيذ ومدنية لا تزال نشطة.",
+    casesHandledDisplayEn: "800+",
+    casesHandledDisplayAr: "+800",
+    casesInProgressEn: "He has completed 7 months with the firm while handling a high-volume caseload across multiple practice areas.",
+    casesInProgressAr: "أكمل 7 أشهر مع المكتب أثناء تعامله مع عدد كبير من الملفات عبر مجالات قانونية متعددة.",
     casesDetailEn:
-      "Mahmoud Abdel Fadeel has handled more than 32 cases involving civil litigation, commercial disputes, and judgment enforcement. His work includes preparing execution files, following court procedures, and coordinating with clients on recovery and compliance steps.",
+      "Mahmoud Abdel Fadeel has handled 800+ cases across civil, commercial, real estate, labor, cheque, and rental matters. His work includes reviewing claims and supporting documents, preparing case files, tracking hearings and submissions, and coordinating with clients through each procedural stage.",
     casesDetailAr:
-      "تولى محمود عبد الفضيل أكثر من 32 قضية في التقاضي المدني والنزاعات التجارية وتنفيذ الأحكام، ويشمل عمله إعداد ملفات التنفيذ ومتابعة الإجراءات القضائية والتنسيق مع العملاء بشأن خطوات التحصيل والامتثال.",
-    practiceAreasEn: ["Civil Litigation", "Commercial Disputes", "Judgment Enforcement", "Legal Follow-up"],
-    practiceAreasAr: ["التقاضي المدني", "النزاعات التجارية", "تنفيذ الأحكام", "المتابعة القانونية"],
+      "تولى محمود عبد الفضيل أكثر من 800 قضية في المجالات المدنية والتجارية والعقارية والعمل والشيكات والإيجارات، ويشمل عمله مراجعة المطالبات والمستندات الداعمة وإعداد ملفات القضايا ومتابعة الجلسات والمذكرات والتنسيق مع العملاء خلال كل مرحلة إجرائية.",
+    practiceAreasEn: ["Civil Cases", "Commercial Cases", "Real Estate", "Labor Law", "Cheque Cases", "Rental Disputes"],
+    practiceAreasAr: ["القضايا المدنية", "القضايا التجارية", "العقارات", "قانون العمل", "قضايا الشيكات", "نزاعات الإيجار"],
     highlightsEn: [
-      "Prepares and follows civil and commercial case submissions.",
-      "Supports judgment enforcement and post-judgment recovery steps.",
-      "Keeps clients informed on court dates, requirements, and file status.",
+      "Handles civil, commercial, real estate, labor, cheque, and rental case files.",
+      "Prepares and follows submissions, hearing updates, and procedural requirements.",
+      "Reviews supporting documents and coordinates next steps with clients and the legal team.",
     ],
     highlightsAr: [
-      "يعد ويتابع مذكرات القضايا المدنية والتجارية.",
-      "يدعم تنفيذ الأحكام وخطوات التحصيل بعد صدور الحكم.",
-      "يبقي العملاء على اطلاع بمواعيد المحكمة والمتطلبات وحالة الملف.",
+      "يتولى ملفات القضايا المدنية والتجارية والعقارية والعمل والشيكات والإيجارات.",
+      "يعد ويتابع المذكرات وتحديثات الجلسات والمتطلبات الإجرائية.",
+      "يراجع المستندات الداعمة وينسق الخطوات التالية مع العملاء والفريق القانوني.",
     ],
     overviewEn: [
-      "Legal Consultant experienced in moving cases from dispute stage through judgment and into practical enforcement action.",
+      "Legal Consultant who has completed 7 months with Almahy Legal Services, handling a high-volume caseload across civil, commercial, real estate, labor, cheque, and rental matters.",
+      "His work focuses on organized case preparation, procedural follow-up, and clear coordination between clients, courts, and the legal team.",
     ],
-    overviewAr: ["مستشار قانوني بخبرة في نقل القضايا من مرحلة النزاع إلى الحكم ثم إلى إجراءات التنفيذ العملية."],
+    overviewAr: [
+      "مستشار قانوني أكمل 7 أشهر مع شركة المحامي للخدمات القانونية، ويتعامل مع عدد كبير من الملفات في المجالات المدنية والتجارية والعقارية والعمل والشيكات والإيجارات.",
+      "يركز عمله على الإعداد المنظم للقضايا والمتابعة الإجرائية والتنسيق الواضح بين العملاء والمحاكم والفريق القانوني.",
+    ],
+    credentialsEn: [
+      {
+        institution: "Port Said University",
+        certificate: "Faculty of Law",
+      },
+    ],
+    credentialsAr: [
+      {
+        institution: "جامعة بورسعيد",
+        certificate: "كلية القانون",
+      },
+    ],
     phone: defaultPhone,
     email: defaultEmail,
   },

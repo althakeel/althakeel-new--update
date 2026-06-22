@@ -56,6 +56,7 @@ export default async function TeamMemberPage({ params }: PageProps) {
   const practiceAreas = isArabic ? member.practiceAreasAr : member.practiceAreasEn;
   const highlights = isArabic ? member.highlightsAr : member.highlightsEn;
   const overview = isArabic ? member.overviewAr : member.overviewEn;
+  const credentials = isArabic ? member.credentialsAr : member.credentialsEn;
   const phoneHref = member.phone.replace(/[^\d+]/g, "");
   const whatsappHref = `https://wa.me/${phoneHref.replace(/^\+/, "")}?text=${encodeURIComponent(
     isArabic ? `مرحباً، أرغب في التواصل مع ${member.nameAr}.` : `Hello, I would like to connect with ${member.nameEn}.`,
@@ -181,6 +182,21 @@ export default async function TeamMemberPage({ params }: PageProps) {
                 ))}
               </ul>
             </section>
+
+            {credentials?.length ? (
+              <section className="rounded-2xl border border-gray-700 bg-gradient-to-br from-gray-800 to-gray-900 p-6 shadow-2xl md:p-8">
+                <h2 className="text-lg font-bold text-white">{isArabic ? "التعليم والشهادات" : "Education & Certifications"}</h2>
+                <div className="mt-5 space-y-4">
+                  {credentials.map((item) => (
+                    <div key={`${item.institution}-${item.certificate}`} className="rounded-xl border border-gray-700 bg-gray-800/70 p-4">
+                      <p className="text-base font-bold text-white">{item.institution}</p>
+                      <p className="mt-2 text-sm leading-7 text-gray-300 md:text-base">{item.certificate}</p>
+                      {item.date ? <p className="mt-2 text-sm font-semibold text-[#DE3B34]">{item.date}</p> : null}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : null}
 
             <section className="rounded-2xl border border-gray-700 bg-gradient-to-br from-gray-800 to-gray-900 p-6 shadow-2xl md:p-8">
               <h2 className="text-lg font-bold text-white">{isArabic ? "نبذة مهنية" : "Professional Overview"}</h2>
