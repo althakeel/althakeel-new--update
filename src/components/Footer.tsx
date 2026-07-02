@@ -1,6 +1,7 @@
 'use client';
 
 import Link from "next/link";
+import { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { translations, Locale } from '@/lib/translations';
 
@@ -58,6 +59,49 @@ export default function Footer({ locale }: { locale: string }) {
     router.push(newPathname);
   };
 
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterStatus, setNewsletterStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [newsletterFeedback, setNewsletterFeedback] = useState('');
+
+  const newsletterCopy = {
+    sending: lang === 'ar' ? 'جارٍ الاشتراك...' : 'Subscribing...',
+    success: lang === 'ar' ? 'شكراً لاشتراكك!' : 'Thank you for subscribing!',
+    error: lang === 'ar' ? 'تعذّر الاشتراك. حاول مرة أخرى.' : "Couldn't subscribe. Please try again.",
+    invalid: lang === 'ar' ? 'يرجى إدخال بريد إلكتروني صحيح.' : 'Please enter a valid email.',
+  };
+
+  const handleNewsletterSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const email = newsletterEmail.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setNewsletterStatus('error');
+      setNewsletterFeedback(newsletterCopy.invalid);
+      return;
+    }
+
+    setNewsletterStatus('sending');
+    setNewsletterFeedback('');
+    try {
+      const res = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (res.ok && json?.success) {
+        setNewsletterStatus('success');
+        setNewsletterFeedback(newsletterCopy.success);
+        setNewsletterEmail('');
+      } else {
+        setNewsletterStatus('error');
+        setNewsletterFeedback(json?.message || newsletterCopy.error);
+      }
+    } catch {
+      setNewsletterStatus('error');
+      setNewsletterFeedback(newsletterCopy.error);
+    }
+  };
+
   return (
     <footer className="relative overflow-hidden bg-[#160A0A] text-white">
       <div className="pointer-events-none absolute inset-0 opacity-60" aria-hidden>
@@ -111,23 +155,38 @@ export default function Footer({ locale }: { locale: string }) {
               <span className="h-px w-14 bg-gradient-to-r from-[#DE3B34] /80 to-transparent" aria-hidden />
             </div>
             <p className="text-sm text-white/80">{t.footerNewsletterDesc}</p>
-            <form className="flex max-w-md items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-2 shadow-inner shadow-black/20">
+            <form onSubmit={handleNewsletterSubmit} className="flex max-w-md items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-2 shadow-inner shadow-black/20">
               <input
                 type="email"
                 name="newsletter"
+                value={newsletterEmail}
+                onChange={(e) => setNewsletterEmail(e.target.value)}
                 placeholder={t.footerEmailPlaceholder}
                 className="w-full bg-transparent text-sm text-white placeholder:text-white/60 focus:outline-none"
+                required
               />
               <button
                 type="submit"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#DE3B34] text-black shadow-lg shadow-[#DE3B34]/30 transition hover:translate-y-[-1px] hover:bg-[#FFB6B6] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#160A0A] focus:ring-[#DE3B34]"
+                disabled={newsletterStatus === 'sending'}
+                className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-[#DE3B34] text-black shadow-lg shadow-[#DE3B34]/30 transition hover:translate-y-[-1px] hover:bg-[#FFB6B6] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#160A0A] focus:ring-[#DE3B34] disabled:cursor-not-allowed disabled:opacity-60"
                 aria-label="Subscribe"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <path d="m4 10 7 3 9-7-16 4-1 7 4-4" />
-                </svg>
+                {newsletterStatus === 'sending' ? (
+                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+                    <path d="m4 10 7 3 9-7-16 4-1 7 4-4" />
+                  </svg>
+                )}
               </button>
             </form>
+            {newsletterFeedback && (
+              <p className={`text-sm ${newsletterStatus === 'success' ? 'text-emerald-300' : 'text-[#FFB6B6]'}`}>
+                {newsletterFeedback}
+              </p>
+            )}
           </div>
         </div>
 

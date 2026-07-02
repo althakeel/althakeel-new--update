@@ -4,7 +4,6 @@ import Script from "next/script";
 import "./globals.css";
 import favicon from "./Favicon.png";
 import WhatsappBottomChat from "@/components/WhatsappBottomChat";
-import FloatingWhatsappButtons from "@/components/FloatingWhatsappButtons";
 import AnalyticsClickTracking from "@/components/AnalyticsClickTracking";
 
 const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
@@ -67,7 +66,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         ) : null}
         {children}
         <AnalyticsClickTracking />
-        <FloatingWhatsappButtons />
         <WhatsappBottomChat />
       </body>
     </html>

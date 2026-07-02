@@ -11,11 +11,35 @@ function WhatsappIcon({ className = 'h-5 w-5' }: { className?: string }) {
   );
 }
 
+const AUTO_CLOSE_MS = 30000;
+
 export default function WhatsappBottomChat() {
   const pathname = usePathname();
   const isArabic = pathname?.startsWith('/ar');
   const [open, setOpen] = useState(false);
   const closeTimerRef = useRef<number | null>(null);
+
+  const cancelCloseTimer = () => {
+    if (closeTimerRef.current) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  };
+
+  const startCloseTimer = () => {
+    cancelCloseTimer();
+    closeTimerRef.current = window.setTimeout(() => setOpen(false), AUTO_CLOSE_MS);
+  };
+
+  const openChat = () => {
+    setOpen(true);
+    startCloseTimer();
+  };
+
+  const closeChat = () => {
+    setOpen(false);
+    cancelCloseTimer();
+  };
 
   const rawPhone = process.env.NEXT_PUBLIC_WHATSAPP_CHAT_NUMBER || '971555020940';
   const phone = rawPhone.replace(/[^\d]/g, '');
@@ -56,20 +80,17 @@ export default function WhatsappBottomChat() {
 
   useEffect(() => {
     setOpen(true);
-    closeTimerRef.current = window.setTimeout(() => {
-      setOpen(false);
-    }, 30000);
+    const id = window.setTimeout(() => setOpen(false), AUTO_CLOSE_MS);
+    closeTimerRef.current = id;
 
-    return () => {
-      if (closeTimerRef.current) {
-        window.clearTimeout(closeTimerRef.current);
-      }
-    };
+    return () => window.clearTimeout(id);
   }, [pathname]);
 
   return (
     <div className="fixed bottom-4 right-4 z-[90] sm:bottom-6 sm:right-6">
       <div
+        onMouseEnter={cancelCloseTimer}
+        onMouseLeave={() => open && startCloseTimer()}
         className={`mb-3 w-[320px] min-h-[340px] max-w-[calc(100vw-24px)] overflow-hidden rounded-2xl bg-[#ECE5DD] shadow-[0_24px_55px_rgba(0,0,0,0.28)] transition-all duration-500 ease-out ${
           open ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-8 opacity-0'
         }`}
@@ -98,7 +119,7 @@ export default function WhatsappBottomChat() {
               </button>
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={closeChat}
                 className="rounded p-1 transition-colors hover:bg-white/15"
                 aria-label={isArabic ? 'اغلاق' : 'Close'}
               >
@@ -152,6 +173,17 @@ export default function WhatsappBottomChat() {
             </a>
           </div>
       </div>
+
+      <button
+        type="button"
+        onClick={openChat}
+        aria-label={isArabic ? 'فتح دردشة واتساب' : 'Open WhatsApp chat'}
+        className={`ml-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[0_10px_30px_rgba(37,211,102,0.45)] transition-all duration-300 hover:bg-[#1ebe5b] ${
+          open ? 'pointer-events-none scale-0 opacity-0' : 'scale-100 opacity-100'
+        }`}
+      >
+        <WhatsappIcon className="h-7 w-7" />
+      </button>
     </div>
   );
 }
